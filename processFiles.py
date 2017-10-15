@@ -65,11 +65,15 @@ between start_dt and end_dt
 """
 def getIntervals(start_dt, end_dt):
     
-    return []
+    intervals =[]
+    for i in range(int((end_dt-start_dt).seconds/3600)):
+        intervals.extend(getIntervalsByHour(start_dt + timedelta(hours=i)))    
+    return list(filter(lambda x: x['date'] > start_dt and x['date'] < end_dt, intervals))
 
     
-
-RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HRV\\RawData\\0"
-os.chdir(RAW_DATA_PATH)
-dt = datetime.strptime('2017-10-01 14:15:16', "%Y-%m-%d %H:%M:%S")
-print (getIntervalsByHour(dt))
+if __name__ == '__main__':
+    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HRV\\RawData\\0"
+    os.chdir(RAW_DATA_PATH)
+    dt = datetime.strptime('2017-10-01 14:15:16', "%Y-%m-%d %H:%M:%S")
+    print (len(getIntervalsByHour(dt)))
+    print (len(getIntervals(dt, dt+timedelta(hours=2))))

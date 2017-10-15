@@ -4,12 +4,13 @@
 import os
 import re
 import csv
+from datetime import datetime, timedelta
 
 
 """
 lists all filenames in current directory matching the given regexp
 """
-def getFilesMatching(regexp):
+def getFileMatching(regexp):
     return list(filter(lambda x: re.match(regexp, x), os.listdir()))
 
 
@@ -22,7 +23,7 @@ def getIntervalsFromFile(filename):
     rows = []
     for row in reader:
         if len(row) > 1:
-            rows.append({'date': row[0], 'interval':int(row[1])})
+            rows.append({'date': datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S"), 'interval':int(row[1])})
     return rows
 
 
@@ -39,18 +40,32 @@ def getRawIntervalsFromFile(filename):
 
 """
 lists all intervals (datetime and interval length) recorded in a specific hour
-@input: year, month, day and hour as two-digit strings
-Example: getIntervalsByHour('17', '10', '01', '14')
+@param[in]: dt - datetime with hour precision, will disregard minutes and seconds
+Example: 
 """
-def getIntervalsByHour(year, month, day, hour):    
-    regexp = r"^rr%s%s%s%s" % (year, month, day, hour)
-    match = getFilesMatching(regexp)
+def getIntervalsByHour(dt):
+    filepattern = datetime.strftime(dt, '%y%m%d%H')
+    regexp = r"^rr%s" % (filepattern)
+    match = getFileMatching(regexp)
     if match:
         return getIntervalsFromFile(match[0])
     else:
         return None
     
+    
+"""
+lists all intervals (datetime and interval length) recorded in a period of time
+between start_dt and end_dt
+@param[in]: start_dt and end_dt as datetimes
+"""
+def getIntervals(start_dt, end_dt):
+    return []
+
+    
 
 RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HRV\\RawData\\0"
 os.chdir(RAW_DATA_PATH)
-print (getIntervalsByHour('17', '10', '01', '14'))
+td = '2017-10-01 14:15:16'
+bi = datetime.strptime(td, "%Y-%m-%d %H:%M:%S")
+print(bi.hour)
+print (getIntervalsByHour(bi))

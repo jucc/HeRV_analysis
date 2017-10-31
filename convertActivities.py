@@ -17,12 +17,19 @@ import csv
 from datetime import datetime, timedelta
 
 
-def getActivityFilenames():
+def getActivityFilenames(dirname='.'):
     regexp = r"^act*"
     return list(filter(lambda x: re.match(regexp, x), os.listdir()))
 
 
-def extractActivitiesFromFile(filename):
+def parseActivityFiles(dirname):
+    os.chdir(dirname)
+    sessions = []
+    for file in getActivityFilenames():
+        sessions.extend(extractSessions(file))
+    return sessions
+
+def extractSessions(filename):
     lines = list(filter(lambda x : len(x) > 1, open(filename, 'r').readlines()))
     reader = csv.reader(lines, delimiter=',')
     rows = []
@@ -47,12 +54,6 @@ def extractActivitiesFromFile(filename):
             
     return rows
 
-
-def parseActivities(dirname):
-    os.chdir(dirname)
-    sessions = []
-    for file in getActivityFilenames:
-        sessions.extend(extractActivitiesFromFile(file))
 
 
 def isStartRow(row):
@@ -80,6 +81,9 @@ def stopSession(row, sess):
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
     os.chdir(RAW_DATA_PATH)
-    #print(parseActivities(RAW_DATA_PATH))
-    filename = 'act171013.csv'
-    print (extractActivitiesFromFile(filename))
+    #filename = 'act171013.csv'
+    #print (extractSessions(filename))    
+    sessions = parseActivityFiles(RAW_DATA_PATH)
+    print (sessions)
+    print (len(sessions))
+    

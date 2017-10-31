@@ -1,6 +1,10 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
-
+"""
+Parses RR files from the HeRV directory, where intervals are stored in files 
+indexed by the hour of day. For example, all intervals from October 1st, 
+from 14:00 to 14:59 would be stored in a file called rr17100114.csv.
+"""
 import os
 import re
 import csv
@@ -15,10 +19,11 @@ def getFileMatching(regexp):
 
 
 """
-returns the name of the file that contains intervals for the hour of a datetime
-If the file does not exits for this hour, will return None
+returns the name of the file that contains intervals for a datetime
+Minutes and seconds are disregarded, the file represents the whole hour in the datetime
+If no file corresponding to this hour exists, will return None
 """
-def getCorrespondingFilename(dt):
+def getFilename(dt):
     filepattern = datetime.strftime(dt, '%y%m%d%H')
     regexp = r"^rr%s" % (filepattern)
     match = getFileMatching(regexp)
@@ -51,7 +56,7 @@ getIntervalsByHour(dt)
 will return all intervals recorded for 2017-10-01 from 14:00:00 to 14:59:59
 """
 def getIntervalsByHour(dt):
-    filename = getCorrespondingFilename(dt)
+    filename = getFilename(dt)
     if filename:
         return getIntervalsFromFile(filename)
     else:

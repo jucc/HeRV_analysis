@@ -1,21 +1,14 @@
-#!/bin/python
 # -*- coding: utf-8 -*-
+
 """
 Parses RR files from the HeRV directory, where intervals are stored in files 
 indexed by the hour of day. For example, all intervals from October 1st, 
 from 14:00 to 14:59 would be stored in a file called rr17100114.csv.
 """
+
 import os
-import re
-import csv
+import csvUtils as csvu
 from datetime import datetime, timedelta
-
-
-"""
-lists all filenames in current directory matching the given regexp
-"""
-def getFileMatching(regexp):
-    return list(filter(lambda x: re.match(regexp, x), os.listdir()))
 
 
 """
@@ -26,9 +19,9 @@ If no file corresponding to this hour exists, will return None
 def getFilename(dt):
     filepattern = datetime.strftime(dt, '%y%m%d%H')
     regexp = r"^rr%s" % (filepattern)
-    match = getFileMatching(regexp)
-    if match:
-        return match[0]
+    f = list(csvu.getFilenames(dirname = '.', regexp=regexp))
+    if len(f) > 0:
+        return f[0]
     else:
         return None
 
@@ -37,10 +30,9 @@ def getFilename(dt):
 lists all intervals (datetime and interval length) in a file
 """
 def getIntervalsFromFile(filename):
-    lines = list(filter(lambda x : len(x) > 3, open(filename, 'r').readlines()))
-    reader = csv.reader(lines, delimiter=',')
+    reader = csvu.getFileReader(filename)
     rows = []
-    for row in reader:
+    for row in reader:        
         if len(row) > 1:
             rows.append({'date': datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S"), 'interval':int(row[1])})
     return rows
@@ -77,8 +69,12 @@ def getIntervals(start_dt, end_dt):
 
     
 if __name__ == '__main__':
-    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HRV\\RawData\\0"
+    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
     os.chdir(RAW_DATA_PATH)
     dt = datetime.strptime('2017-10-01 14:15:16', "%Y-%m-%d %H:%M:%S")
-    print (len(getIntervalsByHour(dt)))
-    print (len(getIntervals(dt, dt+timedelta(hours=2))))
+    mfilename=getFilename(dt)
+    print(mfilename)
+    print('#intervals: %d'%len(getIntervalsFromFile(mfilename)))
+    print('#intervals in 1 hour : %d'%len(getIntervalsByHour(dt)))
+    print('#intervals in 3 hours: %d'%len(getIntervals(dt, dt+timedelta(hours=3))))
+    

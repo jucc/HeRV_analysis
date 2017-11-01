@@ -6,7 +6,6 @@ indexed by the hour of day. For example, all intervals from October 1st,
 from 14:00 to 14:59 would be stored in a file called rr17100114.csv.
 """
 
-import os
 import csvUtils as csvu
 from datetime import datetime, timedelta
 

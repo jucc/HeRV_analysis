@@ -15,7 +15,8 @@ import csv
 Iterator yielding all filenames in a directory that match a given regexp
 """
 def getFilenames(dirname=".", regexp= r".*\.csv"):
-    return filter(lambda x: re.match(regexp, x), os.listdir(path=dirname))
+    match_files = filter(lambda x: re.match(regexp, x), os.listdir(path=dirname))
+    return [os.path.join(dirname, x) for x in match_files]
 
 
 """
@@ -53,7 +54,6 @@ if __name__ == '__main__':
     filenames = list(getFilenames(dirname=RAW_DATA_PATH, regexp= r".*\.csv$"))
     print (len(filenames))
     print (filenames[0])
-    fullfilename = RAW_DATA_PATH + "\\" + filenames[0]
-    rows = list(getFileReader(fullfilename))
+    rows = list(getFileReader(filenames[0]))
     print (len(rows))
     print(rows[1])  

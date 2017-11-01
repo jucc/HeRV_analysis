@@ -10,20 +10,19 @@ NEW SESSION:
 datetime-start,datetime-end,activity-name,posture,reliability,food-recent,caffeine-recent
 """
 
-import os
 import csvUtils as csvu
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 """
 extract list of sessions from all activity files in a dir
 """
 def parseActivityFiles(dirname):
-    os.chdir(dirname)
     sessions = []
-    errors = 0
-    files = list(csvu.getFilenames(dirname, r"^act*"))
+    errors = 0  
+    files = list(csvu.getFilenames(dirname, r"^act.*"))
     for file in files:
+        print('reading %s ... '%file)
         (f_sessions, f_errors) = extractSessions(file)
         sessions.extend(f_sessions)
         errors += f_errors    
@@ -90,7 +89,7 @@ def stopSession(row, sess):
 
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
-    sessions = parseActivityFiles(RAW_DATA_PATH)    
-    print (len(sessions))
-    print (sessions[0])
+    sessions = parseActivityFiles(RAW_DATA_PATH)        
+    print('first session:')
+    print(sessions[0])
     

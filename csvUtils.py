@@ -25,7 +25,7 @@ Each row is a list of columns
 """
 def getFileReader(filename):
     reader = csv.reader(open(filename, 'r').readlines(), delimiter=',')
-    return filter(lambda x : len(x) > 1, reader)
+    return filter(lambda x : any(x), reader)
 
 
 """

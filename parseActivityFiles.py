@@ -22,7 +22,7 @@ def parseActivityFiles(dirname):
     errors = 0  
     files = list(csvu.getFilenames(dirname, r"^act.*"))
     for file in files:
-        print('reading %s ... '%file)
+        print('reading %s ... '%file.split('\\')[-1])
         (f_sessions, f_errors) = extractSessions(file)
         sessions.extend(f_sessions)
         errors += f_errors    

@@ -1,4 +1,3 @@
-#!/bin/python
 # -*- coding: utf-8 -*-
 
 """
@@ -12,48 +11,55 @@ datetime-start,datetime-end,activity-name,posture,reliability,food-recent,caffei
 """
 
 import os
-import re
-import csv
+import csvUtils as csvu
 from datetime import datetime, timedelta
 
 
-def getActivityFilenames(dirname='.'):
-    regexp = r"^act*"
-    return list(filter(lambda x: re.match(regexp, x), os.listdir()))
-
-
+"""
+extract list of sessions from all activity files in a dir
+"""
 def parseActivityFiles(dirname):
     os.chdir(dirname)
     sessions = []
-    for file in getActivityFilenames():
-        sessions.extend(extractSessions(file))
+    errors = 0
+    files = list(csvu.getFilenames(dirname, r"^act*"))
+    for file in files:
+        (f_sessions, f_errors) = extractSessions(file)
+        sessions.extend(f_sessions)
+        errors += f_errors    
+    print ("%d sessions extracted and %d errors found in %d files"
+           %(len(sessions), errors, len(files)))
     return sessions
 
-def extractSessions(filename):
-    lines = list(filter(lambda x : len(x) > 1, open(filename, 'r').readlines()))
-    reader = csv.reader(lines, delimiter=',')
-    rows = []
+
+"""
+extract list of sessions from an activity file
+"""
+def extractSessions(filename):    
+    sessions = []    
     sess = {}
+    excluded = 0
+    reader = csvu.getFileReader(filename)
     for row in reader:
         
-        if isStartRow(row):
-            # if there's an unfinished session pending, flush it first
-            if sess.get('start') != None: 
-                rows.append(sess)
+        if isStartRow(row) and not started(sess):
             sess = startSession(row)
             
-        elif isStopRow(row):
-            # if there is no started session, ignore this stop command
-            if sess.get('start') != None: 
-                act = stopSession(row, sess)
-                rows.append(act)
-                sess = {}
+        elif isStopRow(row) and started(sess):
+            sessions.append(stopSession(row, sess))
+            sess = {}
             
         else:
-            print ("Unidentified activity type in: %s"%row)
-            
-    return rows
-
+            if isStartRow(row) and started(sess):
+                msg = 'orphan start in: %s'
+            elif isStopRow(row) and not started(sess):
+                msg = 'orphan stop in: %s'            
+            else:
+                msg = 'unidentified activity type in: %s'                
+            excluded += 1
+            print (msg%row)
+    
+    return (sessions, excluded)
 
 
 def isStartRow(row):
@@ -62,6 +68,9 @@ def isStartRow(row):
 def isStopRow(row):
     return (len(row) > 1 and row[1] == 'stop')
 
+def started(sess):
+     return (sess.get('start') != None)
+ 
 def timeFromString(timestr):
     return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
 
@@ -78,12 +87,10 @@ def stopSession(row, sess):
     return sess
 
 
+
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
-    os.chdir(RAW_DATA_PATH)
-    #filename = 'act171013.csv'
-    #print (extractSessions(filename))    
-    sessions = parseActivityFiles(RAW_DATA_PATH)
-    print (sessions)
+    sessions = parseActivityFiles(RAW_DATA_PATH)    
     print (len(sessions))
+    print (sessions[0])
     

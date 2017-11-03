@@ -61,7 +61,7 @@ between start_dt and end_dt
 """
 def getIntervals(start_dt, end_dt, dirname="."):
     
-    intervals =[]
+    intervals = getIntervalsByHour(start_dt)
     for i in range(int((end_dt-start_dt).seconds/3600)):
         intervals.extend(getIntervalsByHour(start_dt + timedelta(hours=i), dirname))
     return list(filter(lambda x: x['date'] > start_dt and x['date'] < end_dt, intervals))

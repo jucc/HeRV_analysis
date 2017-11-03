@@ -17,24 +17,27 @@ from datetime import datetime
 """
 extract list of sessions from all activity files in a dir
 """
-def parseActivityFiles(dirname):
+def parseActivityFiles(dirname, verbose=True):
     sessions = []
     errors = 0  
     files = list(csvu.getFilenames(dirname, r"^act.*"))
     for file in files:
-        print('reading %s ... '%file.split('\\')[-1])
-        (f_sessions, f_errors) = extractSessions(file)
+        if verbose:
+            print('reading %s ... '%file.split('\\')[-1])
+        (f_sessions, f_errors) = extractSessions(file, verbose)
         sessions.extend(f_sessions)
         errors += f_errors    
-    print ("%d sessions extracted and %d errors found in %d files"
-           %(len(sessions), errors, len(files)))
+    
+    if verbose:
+        print ("%d sessions extracted and %d errors found in %d files"
+               %(len(sessions), errors, len(files)))
     return sessions
 
 
 """
 extract list of sessions from an activity file
 """
-def extractSessions(filename):    
+def extractSessions(filename, verbose=True):    
     sessions = []    
     sess = {}
     excluded = 0
@@ -56,7 +59,8 @@ def extractSessions(filename):
             else:
                 msg = 'unidentified activity type in: %s'                
             excluded += 1
-            print (msg%row)
+            if verbose:
+                print (msg%row)
     
     return (sessions, excluded)
 
@@ -89,7 +93,7 @@ def stopSession(row, sess):
 
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
-    sessions = parseActivityFiles(RAW_DATA_PATH)        
+    sessions = parseActivityFiles(RAW_DATA_PATH, True)        
     print('first session:')
     print(sessions[0])
     

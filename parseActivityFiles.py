@@ -11,7 +11,6 @@ datetime-start,datetime-end,activity-name,posture,reliability,food-recent,caffei
 """
 
 import csvUtils as csvu
-from datetime import datetime
 
 
 """
@@ -74,11 +73,8 @@ def isStopRow(row):
 def started(sess):
      return (sess.get('start') != None)
  
-def timeFromString(timestr):
-    return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
-
 def startSession(row):
-    sess = {'start': timeFromString(row[0]),
+    sess = {'start': csvu.timeFromString(row[0]),
             'activity': row[2], 
             'posture': row[3] }
     if len(row) > 4:
@@ -86,7 +82,7 @@ def startSession(row):
     return sess
     
 def stopSession(row, sess):
-    sess['stop'] = timeFromString(row[0])
+    sess['stop'] = csvu.timeFromString(row[0])
     return sess
 
 

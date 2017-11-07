@@ -9,7 +9,7 @@ Methods returning iterators can be converted to lists by calling list(method())
 import os
 import re
 import csv
-
+from datetime import datetime
 
 """
 Iterator yielding all filenames in a directory that match a given regexp
@@ -47,6 +47,30 @@ Optional argument: regexp to filter for filenames
 #    for file in getFilenames(dirname, regexp):
 #        rows.extend(getRowsFromFile(file))
 #    return rows
+
+
+
+def stringFromTimeKubios(timestr):
+    return datetime.strftime(timestr, "%Y-%m-%d %H:%M:%S.%f")[:-3]
+
+
+def stringFromTimeFilename(timestr):
+    return datetime.strftime(timestr, "%y-%m-%d-%H-%M")
+
+#def timeFromStringFull(timestr):
+#    return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+
+#def timeFromStringNonPadUS(timestr):
+#    return datetime.strptime(timestr, "%m/%d/%y %H:%M")
+
+def timeFromString(timestr):
+    patterns = ["%Y-%m-%d %H:%M:%S", "%m/%d/%y %H:%M"]
+
+    for pattern in patterns:
+        try:
+            return datetime.strptime(timestr, pattern)
+        except:
+            pass
 
 
 if __name__ == '__main__':

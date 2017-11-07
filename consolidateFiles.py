@@ -5,6 +5,7 @@ uses parseIntervalFiles.py and parseAcrtivityFiles.py to read raw csv files and
 generates consolidated files in formats  R and/or Kubios
 """
 
+import csvUtils as csvu
 import parseIntervalFiles as pif
 import parseActivityFiles as paf  
 #pun intended :)
@@ -54,12 +55,6 @@ def sessHeaderPrint():
     return "user, activity, posture, start, stop, duration, intervals"
 
 
-def stringFromTimeKubios(timestr):
-    return datetime.strftime(timestr, "%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-
-def stringFromTimeFilename(timestr):
-    return datetime.strftime(timestr, "%Y-%m-%d-%H-%M-%S.%f")[:-3]
 
 
 if __name__ == '__main__':
@@ -76,15 +71,13 @@ if __name__ == '__main__':
     slist.write(sessHeaderPrint()+'\n')
     for sess in valid:
         slist.write(sessPrint(sess, forsheet=True, user=user)+'\n')
-        rrfilename = PRE_DATA_PATH + '\\%s_%s.csv'%(sess['activity'], stringFromTimeFilename(sess['start']))
-        print (rrfilename)
+        rrfilename = '%s\\%s-%s.csv'%(PRE_DATA_PATH, sess['activity'], csvu.stringFromTimeFilename(sess['start']))
         rrf = open(rrfilename, 'w')
         for rr in sess['rr']:
             #rrf.write("%s, %d\n"%(stringFromTimeKubios(rr['date']), int(rr['interval'])))
             rrf.write("%d\n"%(int(rr['interval'])))
         rrf.close()
     slist.close()
-    
     
     
     #invalid = getInvalidSessions(data, 300)

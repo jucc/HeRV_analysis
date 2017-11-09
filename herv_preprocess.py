@@ -7,7 +7,7 @@ from sklearn import preprocessing
 
 
 def getData(filename, dtype):    
-    data = getFileContents(filename, dtype)    
+    data = getFileContents(filename, dtype)
     return preprocess(data, 'activity')
 
 
@@ -16,13 +16,26 @@ def getFileContents(filename, dtype):
 
 
 def preprocess(data, labelName):    
-    labels = np.array([x[labelName] for x in data])    
+    
     examples = np.array([x.tolist()[3:23] for x in data])
     print("(#samples, #features) = ", examples.shape)
     print("min and max values before scaling: ", np.min(examples), np.max(examples))
-    examples = preprocessing.scale(examples)
-    print("min and max values after scaling: ", np.min(examples), np.max(examples))
+    examples = preprocessing.scale(examples)    
+    print("min and max values after scaling: ", np.min(examples), np.max(examples))    
+    
+    labels = np.array([x[labelName] for x in data])    
+   
     return (labels, examples)
+
+
+def addHierarchy(labels, group1):
+    h1 = []
+    for label in labels:
+        if label in group1:
+            h1.append('g1')
+        else:
+            h1.append('g2')
+    return np.array(h1)
 
 
 def convertToDic(labels, examples):
@@ -30,16 +43,7 @@ def convertToDic(labels, examples):
     return dic
 
 
-def addHierarchyLabels(dic):
-    for sess in dic:
-        if sess['activity'] in ('movement', 'household-chores', 'exercise-high', 'exercise-low'):
-            sess['l1-movement'] = 1
-        else:
-            sess['l1-movement'] = 0
-    return dic
-
-
-def generateSets(labels, examples, k):
+def trainAndTestDatasets(labels, examples, k):
 
     ltest  = []
     ltrain = []

@@ -9,7 +9,6 @@ import csvUtils as csvu
 import parseIntervalFiles as pif
 import parseActivityFiles as paf  
 #pun intended :)
-from datetime import datetime
 
 """
 for each session read from activity files, adds the corresponding list of RR 
@@ -30,11 +29,7 @@ def getAllDataBySession(dirname, verbose=True):
 
 def getValidSessions(sessions, min_len):
     return list(filter(lambda x: x['duration'] >= min_len and len(x['rr']) >= min_len, sessions))
-
-
-def getInvalidSessions(sessions, min_len):
-    return list(filter(lambda x: x['duration'] < min_len or len(x['rr']) < min_len, sessions))
-                
+               
 
 def sessPrint(sess, forsheet=False, user=''):
     minutes = rrcount = 0
@@ -59,9 +54,9 @@ def sessHeaderPrint():
 
 if __name__ == '__main__':
     
-    user = 0
-    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\%d"%user
-    PRE_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\PreProcessedData\\%d"%user
+    user = 1
+    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\Data\\Raw\\%d"%user
+    PRE_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\Data\\PreProcessed\\%d"%user
     
     data = getAllDataBySession(RAW_DATA_PATH, verbose=False)
     valid = getValidSessions(data, 300)    
@@ -71,19 +66,10 @@ if __name__ == '__main__':
     slist.write(sessHeaderPrint()+'\n')
     for sess in valid:
         slist.write(sessPrint(sess, forsheet=True, user=user)+'\n')
-        rrfilename = '%s\\%s-%s.csv'%(PRE_DATA_PATH, sess['activity'], csvu.stringFromTimeFilename(sess['start']))
+        rrfilename = '%s\\%s-%s.csv'%(PRE_DATA_PATH, sess['activity'], csvu.stringFromTimeFilename(sess['start']))        
         rrf = open(rrfilename, 'w')
-        for rr in sess['rr']:
+        for rr in sess['rr']:            
             #rrf.write("%s, %d\n"%(stringFromTimeKubios(rr['date']), int(rr['interval'])))
             rrf.write("%d\n"%(int(rr['interval'])))
         rrf.close()
-    slist.close()
-    
-    
-    #invalid = getInvalidSessions(data, 300)
-    #for sess in invalid:
-    #    print(sessPrint(sess, forsheet=False))
-        
-    
-    
-        
+    slist.close()      

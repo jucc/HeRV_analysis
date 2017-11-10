@@ -6,65 +6,57 @@ import numpy as np
 from sklearn import preprocessing
 
 
-def getData(filename, dtype):    
-    data = getFileContents(filename, dtype)
-    return preprocess(data, 'activity')
-
-
-def getFileContents(filename, dtype):
+def getData(filename, dtype=None):
     return np.genfromtxt(filename, delimiter=',', dtype=dtype, names=True)
 
 
-def preprocess(data, labelName):    
+def processData(data):    
+    datagroups = getDataByActivity(data)    
+    train, test = balanceTrainTestDatasets(datagroups)
+    ltrain, ftrain = splitExamples(train)
+    ltest, ftest = splitExamples(test)
+    ftrain, ftest = scaleFeatures(ftrain, ftest)
+    return (ltrain, ftrain, ltest, ftest)   
     
-    examples = np.array([x.tolist()[3:23] for x in data])
-    print("(#samples, #features) = ", examples.shape)
-    print("min and max values before scaling: ", np.min(examples), np.max(examples))
-    examples = preprocessing.scale(examples)    
-    print("min and max values after scaling: ", np.min(examples), np.max(examples))    
-    
-    labels = np.array([x[labelName] for x in data])    
-   
+
+def getDataByActivity(data):
+    return [[line for line in data if line['activity']==label] for label in np.unique(data['activity'])]
+
+
+def balanceTrainTestDatasets(data, k=5):
+    test  = []
+    train = []
+        
+    for group in data:
+        n = len(group)
+        n_test = int(n/k)
+        n_train = n - n_test    
+        test.extend(group[0:n_test])
+        train.extend(group[n_test:n])
+        print ("%s: %d examples (%d for train and %d for test)"%(group[0]['activity'], n, n_train, n_test))
+
+    print("\nTotal: %d train examples and %d test examples "%(len(train), len(test)))
+    return(train, test)
+
+
+def splitExamples(data, labelName='activity'):    
+    examples = np.array([x.tolist()[3:-1] for x in data])
+    labels = np.array([x[labelName] for x in data])
     return (labels, examples)
 
 
-def addHierarchy(labels, group1):
-    h1 = []
-    for label in labels:
-        if label in group1:
-            h1.append('g1')
-        else:
-            h1.append('g2')
-    return np.array(h1)
+def scaleFeatures(ftrain, ftest):
+    n_test = len(ftest)
+    n_train = len(ftrain)
+    f = np.vstack((ftrain, ftest))
+    print("min and max values before scaling: ", np.min(f), np.max(f))
+    f = preprocessing.scale(f)
+    print("min and max values after scaling: ", np.min(f), np.max(f))
+    return(f[0:n_train], f[n_train:n_train+n_test])
 
 
-def convertToDic(labels, examples):
-    dic = [{'activity': label, 'examples': examples[labels==label]} for label in np.unique(labels)]
-    return dic
-
-
-def trainAndTestDatasets(labels, examples, k):
-
-    ltest  = []
-    ltrain = []
-    ftest  = []
-    ftrain = []    
-    
-    dic = convertToDic(labels, examples)
-    labelName = 'activity'
-
-    for activity in dic:
-        n = len(activity['examples'])
-        n_test = int(n/k)
-        n_train = n - n_test    
-        ltest.extend([activity[labelName] for i in range(n_test)])
-        ltrain.extend([activity[labelName] for i in range(n_train)])
-        ftest.extend(activity['examples'][0:n_test])
-        ftrain.extend(activity['examples'][n_test:n])
-        print ("%s: %d examples (%d for train and %d for test)"%(activity[labelName], n, n_train, n_test))
-
-    print("\nTotal: %d train examples and %d test examples "%(len(ftrain), len(ftest)))
-    return(ltrain, ltest, ftrain, ftest)
+def filterActivities(datagroups, includelist):
+    return [dg for dg in datagroups if dg[0]['activity'] in includelist]
 
 
 def printResults(expected, result):

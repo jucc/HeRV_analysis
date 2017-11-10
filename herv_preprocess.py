@@ -74,12 +74,14 @@ def groupActivities(data, group):
             line['activity'] = 'out'
 
 
-def printResults(expected, result):
-    print("expected\t\tresult")
-    print("------------------------------")
+def printResults(expected, result, verbose=False):
+    if verbose: 
+        print("expected\t\tresult")
+        print("------------------------------")
     correct = 0
     for i in range(len(expected)):
-        print ("%s\t\t%s"%(expected[i], result[i]))
+        if verbose:
+            print ("%s\t\t%s"%(expected[i], result[i]))
         if expected[i] == result[i]:
             correct += 1    
     print("------\nGot %d out of %d right! :)"%(correct,len(expected)))

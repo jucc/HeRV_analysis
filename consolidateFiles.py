@@ -54,7 +54,7 @@ def sessHeaderPrint():
 
 if __name__ == '__main__':
     
-    user = 1
+    user = 0
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\Data\\Raw\\%d"%user
     PRE_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\Data\\PreProcessed\\%d"%user
     

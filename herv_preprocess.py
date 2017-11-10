@@ -6,8 +6,8 @@ import numpy as np
 from sklearn import preprocessing
 
 
-def getData(filename, dtype="i4,U20,U5,f4,f4,f4,f4,f4,f4,f4,f4,f4"):
-    return np.genfromtxt(filename, delimiter=',', dtype=dtype, names=True)
+def getData(filename, dtype=None):
+    return np.genfromtxt(filename, delimiter=',', dtype="i4,U20,U5,f4,f4,f4,f4,f4,f4,f4,f4,f4,f4,f4,f4", names=True)
 
 
 def processData(data):    
@@ -40,7 +40,7 @@ def balanceTrainTestDatasets(data, k=5):
 
 
 def splitExamples(data, labelName='activity'):    
-    examples = np.array([x.tolist()[3:-1] for x in data])
+    examples = np.array([x.tolist()[3:] for x in data])
     labels = np.array([x[labelName] for x in data])
     return (labels, examples)
 
@@ -55,8 +55,13 @@ def scaleFeatures(ftrain, ftest):
     return(f[0:n_train], f[n_train:n_train+n_test])
 
 
-def filterActivities(data, includelist):
-    return [line for line in data if line['activity'] in includelist]
+def filterActivities(data, includelist=None, excludelist=None):
+    if includelist != None:
+        return [line for line in data if line['activity'] in includelist]
+    elif  excludelist != None:
+        return [line for line in data if line['activity'] not in excludelist]
+    else:
+        return data
     # for filtering after grouping
     # groupsreturn [dg for dg in datagroups if dg[0]['activity'] in includelist]    
 

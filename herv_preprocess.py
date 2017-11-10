@@ -6,7 +6,7 @@ import numpy as np
 from sklearn import preprocessing
 
 
-def getData(filename, dtype=None):
+def getData(filename, dtype="i4,U20,U5,f4,f4,f4,f4,f4,f4,f4,f4,f4"):
     return np.genfromtxt(filename, delimiter=',', dtype=dtype, names=True)
 
 
@@ -55,8 +55,18 @@ def scaleFeatures(ftrain, ftest):
     return(f[0:n_train], f[n_train:n_train+n_test])
 
 
-def filterActivities(datagroups, includelist):
-    return [dg for dg in datagroups if dg[0]['activity'] in includelist]
+def filterActivities(data, includelist):
+    return [line for line in data if line['activity'] in includelist]
+    # for filtering after grouping
+    # groupsreturn [dg for dg in datagroups if dg[0]['activity'] in includelist]    
+
+
+def groupActivities(data, group):
+    for line in data:
+        if line['activity'] in group:
+            line['activity'] = 'in'
+        else:
+            line['activity'] = 'out'
 
 
 def printResults(expected, result):

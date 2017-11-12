@@ -22,6 +22,9 @@ def features(df):
 def userRows(df, user):
     return df.loc[df['user'] == user,:]
 
+def countExamplesByActivity(df):
+    return df.groupby('activity').count()['user']
+
 def addPartition(df, includelist, pname='partition', labelIn='in', labelOut='out'):
     l = []
     for x in df['activity'].isin(includelist):
@@ -42,7 +45,7 @@ def scaleWithinUser(df):
     return pd.concat(dfs)
     
     
-def report(testdf, result, labelName, verbose=False):
+def report(testdf, result, labelName='activity', verbose=False):
     ytrue = [x for x in testdf[labelName]]
     print(classification_report(ytrue, result))
         
@@ -51,7 +54,7 @@ def runSVM(train, test, labelName, kernelName, grid_params, crossval):
     grid = GridSearchCV(svm.SVC(kernel=kernelName, cache_size=1000), param_grid=grid_params, cv=crossval)
     grid.fit(X=train.iloc[:, 3:15], y=train[labelName])
     print("Best params for %s kernel: %s with score %0.5f"%(kernelName, grid.best_params_, grid.best_score_))
-    clf = svm.SVC(kernel=kernelName, cache_size=1000, C=grid.best_params_['C']) # hoe to send params in here?
+    clf = svm.SVC(kernel=kernelName, cache_size=1000, C=grid.best_params_['C'])
     clf.fit(X=train.iloc[:, 3:15], y=train[labelName])
     print ('--- test results for linear kernel:')
     report(test, clf.predict(test.iloc[:, 3:15]), labelName)
@@ -67,8 +70,8 @@ def runFlow(df, labelName='activity'):
     # define cross- validation and grid search parameters
     
     crossval = StratifiedShuffleSplit(n_splits=4, test_size=0.2)
-    c_range = np.logspace(-1, 2, 4) 
-    gamma_range = np.logspace(-2, 1, 4)    
+    c_range = np.logspace(-2, 2, 5)
+    gamma_range = np.logspace(-2, 2, 5)
     
     # linear kernel
     
@@ -95,7 +98,9 @@ def runFlow(df, labelName='activity'):
     
 def runFlowByUser(df, labelName='activity'):
     for user in df.user.unique():
+        dfu = userRows(df, user)
+        dfus = scaleWithinUser(dfu)            
         print ("CLASSFIER FOR USER %s"%user)
-        runFlow(userRows(df, user), labelName)
+        runFlow(dfus, labelName)
         
     

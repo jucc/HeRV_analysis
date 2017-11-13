@@ -47,7 +47,7 @@ def scaleWithinUser(df):
     
 def report(testdf, result, labelName='activity', verbose=False):
     ytrue = [x for x in testdf[labelName]]
-    print(classification_report(ytrue, result))
+    return classification_report(ytrue, result)
         
 
 def runSVM(train, test, labelName, kernelName, grid_params, crossval):
@@ -82,7 +82,8 @@ def runFlow(df, labelName='activity'):
     clf1 = svm.SVC(kernel='linear', cache_size=1000, C=grid_lin.best_params_['C'])
     clf1.fit(X=train.iloc[:, 3:15], y=train[labelName])
     print ('--- test results for linear kernel:')
-    report(test, clf1.predict(test.iloc[:, 3:15]), labelName)
+    rl = report(test, clf1.predict(test.iloc[:, 3:15]), labelName)
+    print(rl)
         
     # rbf kernel
     
@@ -93,14 +94,18 @@ def runFlow(df, labelName='activity'):
     clf2 = svm.SVC(kernel='rbf', cache_size=1000, C=grid_rbf.best_params_['C'], gamma=grid_rbf.best_params_['gamma'])    
     clf2.fit(X=train.iloc[:, 3:15], y=train[labelName])
     print ('--- test results for RBF kernel:')
-    report(test, clf2.predict(test.iloc[:, 3:15]), labelName)
+    rr = report(test, clf2.predict(test.iloc[:, 3:15]), labelName)
+    print(rr)   
+
+    return [rl, rr]
 
     
 def runFlowByUser(df, labelName='activity'):
+    reports = []
     for user in df.user.unique():
         dfu = userRows(df, user)
-        dfus = scaleWithinUser(dfu)            
-        print ("CLASSFIER FOR USER %s"%user)
-        runFlow(dfus, labelName)
+        dfus = scaleWithinUser(dfu)                    
+        reports.append(runFlow(dfus, labelName))
         
+    return reports    
     

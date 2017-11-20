@@ -20,7 +20,8 @@ def features(df):
     return df.iloc[:, 3:15]
 
 def userRows(df, user):
-    return df.loc[df['user'] == user,:]
+    userRows = df.loc[:,'user'] == user
+    return df.loc[userRows,:]
 
 def countExamplesByActivity(df):
     return df.groupby('activity').count()['user']
@@ -36,12 +37,18 @@ def addPartition(df, includelist, pname='partition', labelIn='in', labelOut='out
     return(df.assign(**args))
     
 
+# (side effect) scales all features od df to have mean = 0 and stdv = 1
+def scaleFeatures(df):
+    scaledFeatures = df.iloc[:, 3:15].apply(lambda x: scale(x)).values
+    df.iloc[:, 3:15] = scaledFeatures
+    
+
 def scaleWithinUser(df):
     dfs = []
     for user in df.user.unique():
         u = userRows(df, user)
         u.iloc[:, 3:15] = u.iloc[:, 3:15].apply(lambda x: scale(x)).values
-        dfs.append(u)    
+        dfs.append(u)
     return pd.concat(dfs)
     
     
@@ -63,7 +70,7 @@ def runFlow(df, labelName='activity'):
     
     # preprocess dataset
     
-    df = scaleWithinUser(df)
+    scaleFeatures(df)
     train, test = train_test_split(df, test_size=0.2)
     print("%d train examples and %d test examples"%(len(train),len(test)))        
     
@@ -100,11 +107,11 @@ def runFlow(df, labelName='activity'):
     return [rl, rr]
 
     
-def runFlowByUser(df, labelName='activity'):
+def runFlowForEveryUser(df, labelName='activity'):
     reports = []
     for user in df.user.unique():
         dfu = userRows(df, user)
-        dfus = scaleWithinUser(dfu)                    
+        dfus = scaleWithinUser(dfu)
         reports.append(runFlow(dfus, labelName))
         
     return reports    

@@ -64,7 +64,8 @@ def getIntervals(start_dt, end_dt, dirname="."):
     intervals = getIntervalsByHour(start_dt, dirname)
     for i in range(int((end_dt-start_dt).seconds/3600)):
         intervals.extend(getIntervalsByHour(start_dt + timedelta(hours=i), dirname))
-    return list(filter(lambda x: x['date'] > start_dt and x['date'] < end_dt, intervals))
+    return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
+
 
     
 if __name__ == '__main__':

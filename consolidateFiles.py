@@ -10,6 +10,9 @@ import parseIntervalFiles as pif
 import parseActivityFiles as paf  
 #pun intended :)
 
+from datetime import timedelta
+
+
 """
 for each session read from activity files, adds the corresponding list of RR 
 intervals contained in the time frame between its start and stop
@@ -28,8 +31,34 @@ def getAllDataBySession(dirname, verbose=True):
 
 
 def getValidSessions(sessions, min_len):
-    return list(filter(lambda x: x['duration'] >= min_len and len(x['rr']) >= min_len, sessions))
-               
+    return [sess for sess in sessions if sess['duration'] >= min_len and len(sess['rr']) >= min_len]
+
+
+def fragment_sessions(sessions, duration=300, discard=90):
+    
+    vsessions = getValidSessions(sessions, discard+duration)
+    print ("%d valid sessions out of %d total (at least one full fragment of %d seconds after discarding first %d seconds)"
+           %(len(vsessions), len(sessions), duration, discard))
+
+    s_id = 0
+
+    frags = []
+    for sess in vsessions:
+        f_id = 0   
+        fstop = sess['start'] + timedelta(seconds=discard)
+        while True:
+            fstart = fstop
+            fstop = fstart + timedelta(seconds=duration)
+            if fstop > sess['stop']:
+                break
+            rr = pif.getIntervals(fstart, fstop, dirname=RAW_DATA_PATH)
+            frags.append({ 'start': fstart, 'stop': fstop, 'rr':rr, 'activity': sess['activity'], 'sess': s_id, 'order': f_id })
+            f_id = f_id +1
+
+        s_id = s_id + 1
+        
+    return frags           
+
 
 def sessPrint(sess, forsheet=False, user=''):
     minutes = rrcount = 0

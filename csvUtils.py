@@ -71,6 +71,10 @@ def timeFromString(timestr):
             return datetime.strptime(timestr, pattern)
         except:
             pass
+    
+    
+def duration(start, stop):
+    return  int((stop-start).seconds)
 
 
 if __name__ == '__main__':

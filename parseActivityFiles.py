@@ -81,8 +81,10 @@ def startSession(row):
         sess['notes'] = row[4]
     return sess
     
+    
 def stopSession(row, sess):
     sess['stop'] = csvu.timeFromString(row[0])
+    sess['duration'] = csvu.duration(sess['start'], sess['stop'])
     return sess
 
 

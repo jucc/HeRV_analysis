@@ -5,27 +5,28 @@ uses parseIntervalFiles.py and parseAcrtivityFiles.py to read raw csv files and
 generates consolidated files in formats  R and/or Kubios
 """
 from datetime import timedelta
+import numpy as np
 
 import csvUtils as csvu
 import parseIntervalFiles as pif
-import parseActivityFiles as paf  
+import parseActivityFiles as paf
 #pun intended :)
 
 
 def sessions_with_beats(dirname, verbose=True):
     """
-    for each session read from activity files, adds the corresponding list of RR 
+    for each session read from activity files, adds the corresponding list of RR
     intervals contained in the time frame between its start and stop
     """
-    
+
     sessions = paf.parseActivityFiles(dirname, verbose)
-    
-    for sess in sessions:        
-        sess['duration'] = int((sess['stop']-sess['start']).seconds)        
-        sess['rr'] = pif.getIntervals(sess['start'], sess['stop'], dirname)        
+
+    for sess in sessions:
+        sess['duration'] = int((sess['stop']-sess['start']).seconds)
+        sess['rr'] = pif.getIntervals(sess['start'], sess['stop'], dirname)
         if verbose:
             print(print_summary(sess))
-            
+
     return sessions
 
 
@@ -67,9 +68,17 @@ def fragment_sessions(sessions, duration=300, discard=90):
 
 def beats_in_fragment(frag, dirname='.'):
     """
-    returns all RR intervals recorded in the duration of the fragment
+    lists RR intervals recorded in the duration of the fragment (in the form of dics
+    with datetime and value)
     """
     return pif.getIntervals(frag['start'], frag['stop'], dirname)
+
+
+def beatlist(beats):
+    """
+    converts the list of intervals (dic with datetime and value) to an array of interval values
+    """
+    return np.array(list([x['interval'] for x in beats]))
 
 
 def add_beats_to_fragments(frags, dirname='.'):
@@ -78,7 +87,6 @@ def add_beats_to_fragments(frags, dirname='.'):
     """
     for frag in frags:
         frag['rr'] = beats_in_fragment(frag, dirname)
-  
 
 
 def print_summary(sess, forsheet=False, user=''):
@@ -89,10 +97,10 @@ def print_summary(sess, forsheet=False, user=''):
     if sess.get('duration'):
         minutes = sess['duration']/60
     if sess.get('rr'):
-        rrcount = len(sess['rr'])    
+        rrcount = len(sess['rr'])
     basicinfo = (minutes, rrcount)
     if forsheet:
-        return "%s, %s, %s, %s, %s"%(user, sess['activity'], sess['posture'], str(sess['start']), str(sess['stop'])) + ", %d, %d"%basicinfo 
+        return "%s, %s, %s, %s, %s"%(user, sess['activity'], sess['posture'], str(sess['start']), str(sess['stop'])) + ", %d, %d"%basicinfo
     else:
         return str(sess['start']) + "\t%d min\t%d beats"%basicinfo
 

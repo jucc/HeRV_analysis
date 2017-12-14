@@ -6,6 +6,7 @@ generates consolidated files in formats  R and/or Kubios
 """
 from datetime import timedelta
 import numpy as np
+from hrv.classical import time_domain, frequency_domain
 
 import csvUtils as csvu
 import parseIntervalFiles as pif
@@ -78,15 +79,23 @@ def beatlist(beats):
     """
     converts the list of intervals (dic with datetime and value) to an array of interval values
     """
-    return np.array(list([x['interval'] for x in beats]))
+    return np.array([x['interval'] for x in beats])
 
 
-def add_beats_to_fragments(frags, dirname='.'):
+def calc_metrics(beatlist):
+    td = time_domain(beatlist)
+    fd = frequency_domain(beatlist)
+    td.update(fd)
+    return td
+
+
+def aggregate_data(frag, dirname):
     """
-    adds the full list of rr intervals to each fragment (in memory)
+    add time domain and frequency domain metrics for the beats in the fragment
     """
-    for frag in frags:
-        frag['rr'] = beats_in_fragment(frag, dirname)
+    agg = frag
+    agg.update(calc_metrics(beatlist(beats_in_fragment(frag, dirname))))
+    return agg
 
 
 def print_summary(sess, forsheet=False, user=''):

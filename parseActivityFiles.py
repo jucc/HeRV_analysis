@@ -11,22 +11,25 @@ datetime-start,datetime-end,activity-name,posture,reliability,food-recent,caffei
 """
 
 import csvUtils as csvu
+from os import path
 
 
 """
 extract list of sessions from all activity files in a dir
 """
-def parseActivityFiles(dirname, verbose=True):
+def get_user_sessions(user, dirname='.', verbose=True):
+    user_path = path.join(dirname, str(user))
     sessions = []
-    errors = 0  
-    files = list(csvu.getFilenames(dirname, r"^act.*"))
+    errors = 0
+    files = list(csvu.getFilenames(user_path, r"^act.*"))
     for file in files:
         if verbose:
             print('reading %s ... '%file.split('\\')[-1])
         (f_sessions, f_errors) = extractSessions(file, verbose)
         sessions.extend(f_sessions)
-        errors += f_errors    
-    
+        errors += f_errors
+    for sess in sessions:
+        sess.update({"user": user})
     if verbose:
         print ("%d sessions extracted and %d errors found in %d files"
                %(len(sessions), errors, len(files)))

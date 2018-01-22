@@ -7,6 +7,7 @@ generates consolidated files in formats  R and/or Kubios
 from datetime import timedelta
 import numpy as np
 from hrv.classical import time_domain, frequency_domain
+from os import path
 
 import csvUtils as csvu
 import parseIntervalFiles as pif
@@ -58,7 +59,8 @@ def fragment_sessions(sessions, duration=300, discard=90):
             fstop = fstart + timedelta(seconds=duration)
             if fstop > sess['stop']:
                 break
-            frags.append({'start':fstart, 'stop':fstop, 'activity':sess['activity'],
+            frags.append({'start':fstart, 'stop':fstop, 
+                          'activity':sess['activity'], 'user':sess['user'],
                           'sess':s_id, 'order':f_id})
             f_id = f_id +1
 
@@ -72,7 +74,7 @@ def beats_in_fragment(frag, dirname='.'):
     lists RR intervals recorded in the duration of the fragment (in the form of dics
     with datetime and value)
     """
-    return pif.getIntervals(frag['start'], frag['stop'], dirname)
+    return pif.get_intervals(frag['start'], frag['stop'], path.join(dirname, str(frag['user'])))
 
 
 def beatlist(beats):

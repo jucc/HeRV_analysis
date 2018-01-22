@@ -8,6 +8,7 @@ from 14:00 to 14:59 would be stored in a file called rr17100114.csv.
 
 import csvUtils as csvu
 from datetime import datetime, timedelta
+from os import path
 
 
 """
@@ -46,7 +47,7 @@ Example:
 getIntervalsByHour(dt)
 will return all intervals recorded for 2017-10-01 from 14:00:00 to 14:59:59
 """
-def getIntervalsByHour(dt, dirname="."):
+def get_intervals_by_hour(dt, dirname="."):
     filename = getFilename(dt, dirname)
     if filename:
         return getIntervalsFromFile(filename)
@@ -59,11 +60,11 @@ lists all intervals (datetime and interval length) recorded in a period of time
 between start_dt and end_dt
 @param[in]: start_dt and end_dt as datetimes
 """
-def getIntervals(start_dt, end_dt, dirname="."):
+def get_intervals(start_dt, end_dt, dirname="."):
     
-    intervals = getIntervalsByHour(start_dt, dirname)
+    intervals = get_intervals_by_hour(start_dt, dirname)
     for i in range(int((end_dt-start_dt).seconds/3600)):
-        intervals.extend(getIntervalsByHour(start_dt + timedelta(hours=i), dirname))
+        intervals.extend(get_intervals_by_hour(start_dt + timedelta(hours=i), dirname))
     return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
 
 

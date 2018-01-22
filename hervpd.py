@@ -20,8 +20,11 @@ def userRows(df, user):
     userRows = df.loc[:,'user'] == user
     return df.loc[userRows,:]
 
-def countExamplesByActivity(df):
-    return df.groupby('activity').count()['user']
+def count_examples_byActivity(df):
+    return count_examples_by(df, 'activity')
+
+def count_examples_by(df, col_name):
+    return df.groupby(col_name).count()['user']
 
 def addPartition(df, includelist, pname='partition', labelIn='in', labelOut='out'):
     l = []
@@ -105,3 +108,19 @@ def runFlowForEveryUser(df, feature_cols, labelName='activity'):
         
     return reports    
     
+
+def plot_count(df, label, include=[], exclude=[]):
+    """
+    generates a bar plot with the ciounts of df elements in 
+    column 'label'. Optionally only include rows where column
+    values are in include list or are outside exclude list
+    """
+    if len(include) != 0:
+         df2 = df.loc[df.activity.isin(include)]
+    elif len(exclude) != 0:
+         df2 = df.loc[~df.activity.isin(exclude)]
+    else:
+         df2 = df
+    ac = count_examples_by(df2, label)
+    ax = ac.plot(kind='bar')
+    ax.set_ylabel("fragments")

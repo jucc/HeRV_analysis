@@ -5,37 +5,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import svm
-from sklearn.preprocessing import scale, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedShuffleSplit, GridSearchCV, train_test_split
 from sklearn.metrics import classification_report
 
 
-def filterActivities(df, includelist):
-    return df.loc[df['activity'].isin(includelist)]
+def filter_in(df, column, include):
+    return df.loc[df[column].isin(include)]
 
-def excludeActivities(df, excludelist):
-    return df.loc[~df['activity'].isin(excludelist)]
+def filter_out(df, column, exclude):
+    return df.loc[~df[column].isin(exclude)]
 
-def userRows(df, user):
-    userRows = df.loc[:,'user'] == user
-    return df.loc[userRows,:]
+def count_by(df, column):
+    return df.groupby(column).count()['user']
 
-def count_examples_byActivity(df):
-    return count_examples_by(df, 'activity')
+def user_data(df, user):
+    return filter_in(df, 'user', [user])
 
-def count_examples_by(df, col_name):
-    return df.groupby(col_name).count()['user']
-
-def addPartition(df, includelist, pname='partition', labelIn='in', labelOut='out'):
-    l = []
-    for x in df['activity'].isin(includelist):
-        if x:
-            l.append(labelIn)
-        else:
-            l.append(labelOut)
-    args = {pname : l}
-    return(df.assign(**args))
-
+def add_partition(df, includelist, pname='partition', labelIn='in', labelOut='out'):
+    df[pname] = np.where(df['activity'].isin(includelist), labelIn, labelOut)
+    return df
 
 def scaled_features(df, feature_cols):
     """
@@ -44,13 +33,12 @@ def scaled_features(df, feature_cols):
     scaler = StandardScaler()
     return scaler.fit_transform(df[feature_cols].as_matrix())
 
-
 def scale_within_user(df, feature_cols):
     """
     performs scaling (gaussian features eith mean = 0 and sd  = 1) separately 
     for each user, so that they don't affect each other's measures
     """
-    dfs = [scaled_features(userRows(df, user).values, feature_cols) for user in df.user.unique()]
+    dfs = [scaled_features(filter_in(df, 'user', [u]).values, feature_cols) for u in df.user.unique()]
     return pd.concat(dfs)
 
 
@@ -102,7 +90,7 @@ def run_flow(df, feature_cols, labelName='activity'):
 def runFlowForEveryUser(df, feature_cols, labelName='activity'):
     reports = []
     for user in df.user.unique():
-        dfu = userRows(df, user)
+        dfu = user_data(df, user)
         dfus = scale_within_user(dfu, feature_cols)
         reports.append(run_flow(dfus, labelName), feature_cols)
         
@@ -111,9 +99,9 @@ def runFlowForEveryUser(df, feature_cols, labelName='activity'):
 
 def plot_count(df, label, include=[], exclude=[]):
     """
-    generates a bar plot with the ciounts of df elements in 
-    column 'label'. Optionally only include rows where column
-    values are in include list or are outside exclude list
+    generates a bar plot with the ciounts of df elements in column 'label'. 
+    Optionally, only include rows where column values are in include list 
+    or are outside exclude list
     """
     if len(include) != 0:
          df2 = df.loc[df.activity.isin(include)]
@@ -121,6 +109,6 @@ def plot_count(df, label, include=[], exclude=[]):
          df2 = df.loc[~df.activity.isin(exclude)]
     else:
          df2 = df
-    ac = count_examples_by(df2, label)
+    ac = count_by(df2, label)
     ax = ac.plot(kind='bar')
     ax.set_ylabel("fragments")

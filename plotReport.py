@@ -38,6 +38,11 @@ def plot_classification_report(cr, title='Classification', with_avg_total=False,
     plt.ylabel('Classes')
     plt.xlabel('Metrics')
 
+    plt.show()
+    plt.clf()
+    plt.cla()
+    plt.close()
+
 
 
 def  fscore_from_report(cr):

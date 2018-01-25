@@ -60,7 +60,8 @@ def fragment_sessions(sessions, duration=300, discard=90):
             if fstop > sess['stop']:
                 break
             frags.append({'start':fstart, 'stop':fstop, 
-                          'activity':sess['activity'], 'user':sess['user'],
+                          'activity':sess['activity'], 'posture':sess['posture'],
+                          'user':sess['user'],
                           'sess':s_id, 'order':f_id})
             f_id = f_id +1
 

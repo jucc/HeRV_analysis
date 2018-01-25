@@ -3,10 +3,12 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotReport as pr
 
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedShuffleSplit, GridSearchCV, train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 
@@ -26,76 +28,6 @@ def add_partition(df, includelist, pname='partition', labelIn='in', labelOut='ou
     df[pname] = np.where(df['activity'].isin(includelist), labelIn, labelOut)
     return df
 
-def scaled_features(df, feature_cols):
-    """
-    scales all features to a gausssian with mean = 0 and sd = 1
-    """
-    scaler = StandardScaler()
-    return scaler.fit_transform(df[feature_cols].as_matrix())
-
-def scale_within_user(df, feature_cols):
-    """
-    performs scaling (gaussian features eith mean = 0 and sd  = 1) separately 
-    for each user, so that they don't affect each other's measures
-    """
-    dfs = [scaled_features(filter_in(df, 'user', [u]).values, feature_cols) for u in df.user.unique()]
-    return pd.concat(dfs)
-
-
-def report(testdf, result, labelName='activity', verbose=False):
-    return classification_report([x for x in testdf[labelName]], result)
-        
-
-def run_flow(df, feature_cols, labelName='activity'):
-    
-    # preprocess dataset
-    
-    scaled_features(df, feature_cols)
-    train, test = train_test_split(df, test_size=0.2)
-    print("%d train examples and %d test examples"%(len(train),len(test)))        
-    
-    # define cross- validation and grid search parameters
-    
-    crossval = StratifiedShuffleSplit(n_splits=4, test_size=0.2)
-    c_range = np.logspace(-2, 2, 5)
-    gamma_range = np.logspace(-2, 2, 5)
-    
-    # linear kernel
-    
-    param_lin=dict(C=c_range)
-    grid_lin = GridSearchCV(svm.SVC(kernel='linear', cache_size=1000), param_grid=param_lin, cv=crossval)
-    grid_lin.fit(X=train[feature_cols], y=train[labelName])
-    print("Best params for linear kernel: %s with score %0.5f" % (grid_lin.best_params_, grid_lin.best_score_))    
-    clf1 = svm.SVC(kernel='linear', cache_size=1000, C=grid_lin.best_params_['C'])
-    clf1.fit(X=train[feature_cols], y=train[labelName])
-    print ('--- test results for linear kernel:')
-    rl = report(test, clf1.predict(test[feature_cols]), labelName)
-    print(rl)
-        
-    # rbf kernel
-    
-    param_rbf=dict(C=c_range, gamma=gamma_range)
-    grid_rbf = GridSearchCV(svm.SVC(kernel='rbf', cache_size=1000), param_grid=param_rbf, cv=crossval)
-    grid_rbf.fit(X=train[feature_cols], y=train[labelName])
-    print("Best params for RBF kernel: %s with score %0.5f" % (grid_rbf.best_params_, grid_rbf.best_score_))
-    clf2 = svm.SVC(kernel='rbf', cache_size=1000, C=grid_rbf.best_params_['C'], gamma=grid_rbf.best_params_['gamma'])    
-    clf2.fit(X=train[feature_cols], y=train[labelName])
-    print ('--- test results for RBF kernel:')
-    rr = report(test, clf2.predict(test[feature_cols]), labelName)
-    print(rr)   
-
-    return [rl, rr]
-
-    
-def runFlowForEveryUser(df, feature_cols, labelName='activity'):
-    reports = []
-    for user in df.user.unique():
-        dfu = user_data(df, user)
-        dfus = scale_within_user(dfu, feature_cols)
-        reports.append(run_flow(dfus, labelName), feature_cols)
-        
-    return reports    
-    
 
 def plot_count(df, label, include=[], exclude=[]):
     """
@@ -112,3 +44,91 @@ def plot_count(df, label, include=[], exclude=[]):
     ac = count_by(df2, label)
     ax = ac.plot(kind='bar')
     ax.set_ylabel("fragments")
+
+
+def scaled_features(df, feature_cols):
+    """
+    scales all features to a gausssian with mean = 0 and sd = 1
+    """
+    scaler = StandardScaler()
+    return scaler.fit_transform(df[feature_cols].as_matrix())
+
+def preprocess(df, features):
+    """
+    scales all features and splits df into train (4/5 examples)
+    and test (1/5) datasets
+    """
+    scaled_features(df, features)
+    train, test = train_test_split(df, test_size=0.2)
+    print(len(train), len(test))
+    return (train, test)
+
+def report_test(clf, df_test, features, labels, print_report=False, plot_report=False):
+    """
+    returns the calulated score of classifier in the test dataset and,
+    optionally, prints the f1 report and its heatmap plot
+    """
+    y_true = df_test[labels]
+    y_pred = clf.predict(X=df_test[features])
+    if len(labels) > 1:
+        label_names = labels
+    else:
+        label_names = ['not ' + labels[0], labels[0]] 
+    report = classification_report(y_true, y_pred, target_names=label_names)
+    if print_report:
+        print(report)
+    if plot_report:
+        pr.plot_classification_report(report, cmap=plt.cm.coolwarm_r)
+    return clf.score(X=df_test[features], y=y_true)
+
+
+def clf_svm_lin(df_train, feature_cols, labelName='activity', C=10):
+    """
+    create and fit a linear svm classifier
+    """
+    clf1 = svm.SVC(kernel='linear', cache_size=1000, C=C)
+    clf1.fit(X=df_train[feature_cols], y=df_train[labelName])
+    return clf1
+
+def clf_svm_rbf(df_train, feature_cols, labelName='activity', C=10, gamma=0.1):
+    """
+    create and fit a rbf svm classifier
+    """
+    clf1 = svm.SVC(kernel='rbf', cache_size=1000, C=C, gamma=gamma)
+    clf1.fit(X=df_train[feature_cols], y=df_train[labelName])
+    return clf1
+
+def clf_rf(df_train, features, labels):  
+    """
+    create and fit a random forest classifier
+    """
+    clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
+    clf.fit(X=df_train[features], y=df_train[labels])
+    return clf
+
+
+def model_selection_svm(df, feature_cols, labelName='activity'):
+
+    train, test = preprocess(df, feature_cols)
+
+    # define cross- validation and grid search parameters
+
+    crossval = StratifiedShuffleSplit(n_splits=4, test_size=0.2)
+    c_range = np.logspace(-2, 2, 5)
+    gamma_range = np.logspace(-2, 2, 5)
+
+    # linear kernel
+
+    param_lin=dict(C=c_range)
+    grid_lin = GridSearchCV(svm.SVC(kernel='linear', cache_size=1000), param_grid=param_lin, cv=crossval)
+    grid_lin.fit(X=train[feature_cols], y=train[labelName])
+    print("Best params for linear kernel: %s with score %0.5f" % (grid_lin.best_params_, grid_lin.best_score_))    
+        
+    # rbf kernel
+    
+    param_rbf=dict(C=c_range, gamma=gamma_range)
+    grid_rbf = GridSearchCV(svm.SVC(kernel='rbf', cache_size=1000), param_grid=param_rbf, cv=crossval)
+    grid_rbf.fit(X=train[feature_cols], y=train[labelName])
+    print("Best params for RBF kernel: %s with score %0.5f" % (grid_rbf.best_params_, grid_rbf.best_score_))
+
+    return (grid_lin.best_params_['C'], grid_rbf.best_params_['C'], grid_rbf.best_params_['gamma'])

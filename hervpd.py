@@ -103,7 +103,7 @@ def clf_rf(df_train, features, labels):
     create and fit a random forest classifier
     """
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
-    clf.fit(X=df_train[features], y=df_train[labels])
+    clf.fit(X=df_train[features], y=np.array(df_train[labels]).ravel())
     return clf
 
 
@@ -115,12 +115,14 @@ def model_selection_svm(df, feature_cols, labelName='activity'):
 
     crossval = StratifiedShuffleSplit(n_splits=4, test_size=0.2)
     c_range = np.logspace(-2, 2, 5)
-    gamma_range = np.logspace(-2, 2, 5)
+    gamma_range = np.logspace(-2, 2, 5)   
 
     # linear kernel
 
     param_lin=dict(C=c_range)
+    print('starting model selection')
     grid_lin = GridSearchCV(svm.SVC(kernel='linear', cache_size=1000), param_grid=param_lin, cv=crossval)
+    print('fitting model')
     grid_lin.fit(X=train[feature_cols], y=train[labelName])
     print("Best params for linear kernel: %s with score %0.5f" % (grid_lin.best_params_, grid_lin.best_score_))    
         

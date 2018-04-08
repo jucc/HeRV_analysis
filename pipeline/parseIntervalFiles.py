@@ -72,7 +72,6 @@ def get_intervals(start_dt, end_dt, dirname="."):
     
     intervals = []
     for i in range(hourcount(start_dt, end_dt)):
-        print (i, len(intervals))
         intervals.extend(get_intervals_by_hour(start_dt + timedelta(hours=i), dirname))
     return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
 

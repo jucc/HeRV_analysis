@@ -54,7 +54,15 @@ def get_intervals_by_hour(dt, dirname="."):
     else:
         return []
     
+    
+"""
+counts how many whole hours are between two datetimes 
+"""
+def hourcount (start_dt, end_dt):
+    td = end_dt-start_dt
+    return int(td.days * 24 + td.seconds/3600)
    
+    
 """
 lists all intervals (datetime and interval length) recorded in a period of time
 between start_dt and end_dt
@@ -62,8 +70,9 @@ between start_dt and end_dt
 """
 def get_intervals(start_dt, end_dt, dirname="."):
     
-    intervals = get_intervals_by_hour(start_dt, dirname)
-    for i in range(int((end_dt-start_dt).seconds/3600)):
+    intervals = []
+    for i in range(hourcount(start_dt, end_dt)):
+        print (i, len(intervals))
         intervals.extend(get_intervals_by_hour(start_dt + timedelta(hours=i), dirname))
     return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
 

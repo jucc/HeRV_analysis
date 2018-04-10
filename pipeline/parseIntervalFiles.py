@@ -64,17 +64,27 @@ def hourcount (start_dt, end_dt):
    
     
 """
-lists all intervals (datetime and interval length) recorded in a period of time
-between start_dt and end_dt
+lists all intervals recorded in the period of time between start_dt and end_dt
 @param[in]: start_dt and end_dt as datetimes
 """
-def get_intervals(start_dt, end_dt, dirname="."):
-    
+def get_intervals(start_dt, end_dt, dirname="."):    
     intervals = []
     for i in range(hourcount(start_dt, end_dt)):
         intervals.extend(get_intervals_by_hour(start_dt + timedelta(hours=i), dirname))
     return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
 
+
+"""
+lists all intervals in a given day (year, month day, from 00:00 to 23:59)
+"""
+def get_day_intervals(year, month, day, dirname):
+    date = str(year) + '-' + str(month) + '-' + str(day) + ' '
+    stamp = "%Y-%m-%d %H:%M:%S"
+    beg = datetime.strptime(date + '00:00:00', stamp)
+    end = datetime.strptime(date + '23:59:00', stamp)
+
+    return get_intervals(beg, end, dirname)
+    
 
     
 if __name__ == '__main__':

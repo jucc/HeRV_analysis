@@ -84,8 +84,19 @@ def get_day_intervals(year, month, day, dirname):
     end = datetime.strptime(date + '23:59:00', stamp)
 
     return get_intervals(beg, end, dirname)
-    
 
+
+"""
+iterates over two dates. If no delta is provided, will yield one day each time
+"""
+def iterate_dates(from_date=None, to_date=None, delta=timedelta(days=1)):
+    from_date = from_date or datetime.now()
+    while to_date is None or from_date <= to_date:
+        yield from_date
+        from_date = from_date + delta
+    return
+
+    
     
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"

@@ -87,16 +87,24 @@ def get_day_intervals(year, month, day, dirname):
 
 
 """
-iterates over two dates. If no delta is provided, will yield one day each time
+aux function to iterate over days between two dates
 """
-def iterate_dates(from_date=None, to_date=None, delta=timedelta(days=1)):
-    from_date = from_date or datetime.now()
-    while to_date is None or from_date <= to_date:
-        yield from_date
-        from_date = from_date + delta
+def iterate_dates(dt_start, dt_end):
+    while dt_start <= dt_end:
+        yield dt_start
+        dt_start = dt_start + timedelta(days=1)
     return
 
-    
+
+"""
+returns a list of tuples containing the date and the number of intervals recorded
+for each day between the dates given (only contains days with at leats one interval recorded)
+"""
+def count_intervals_by_day(dt_start, dt_end, dirname='.'):
+    days = [get_day_intervals(year=dt.year, month=dt.month, day=dt.day, dirname=dirname) 
+                 for dt in iterate_dates(dt_start, dt_end)]
+    return [(day[0]['date'], len(day)) for day in days if len(day) > 0]
+                              
     
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"

@@ -56,11 +56,13 @@ def get_intervals_by_hour(dt, dirname="."):
     
     
 """
-counts how many whole hours are between two datetimes 
+iterate over every full hour between two datetimes 
 """
-def hourcount (start_dt, end_dt):
-    td = end_dt-start_dt
-    return int(td.days * 24 + td.seconds/3600)
+def fullhours(start_dt, end_dt):
+    start = start_dt.replace(minute=0, second=0)
+    while start < end_dt:
+        yield start
+        start = start + timedelta(hours=1)
    
     
 """
@@ -69,8 +71,8 @@ lists all intervals recorded in the period of time between start_dt and end_dt
 """
 def get_intervals(start_dt, end_dt, dirname="."):    
     intervals = []
-    for i in range(hourcount(start_dt, end_dt)):
-        intervals.extend(get_intervals_by_hour(start_dt + timedelta(hours=i), dirname))
+    for hour in fullhours(start_dt, end_dt):
+        intervals.extend(get_intervals_by_hour(hour, dirname))
     return [x for x in intervals if x['date'] > start_dt and x['date'] < end_dt]
 
 
@@ -104,17 +106,3 @@ def count_intervals_by_day(dt_start, dt_end, dirname='.'):
     days = [get_day_intervals(year=dt.year, month=dt.month, day=dt.day, dirname=dirname) 
                  for dt in iterate_dates(dt_start, dt_end)]
     return [(day[0]['date'], len(day)) for day in days if len(day) > 0]
-                              
-    
-if __name__ == '__main__':
-    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
-    dt = datetime.strptime('2017-10-01 14:15:16', "%Y-%m-%d %H:%M:%S")
-    mfilename=getFilename(dt, RAW_DATA_PATH)
-    print(mfilename)
-    print('#intervals: %d'%len(getIntervalsFromFile(mfilename)))
-    print('#intervals in 1 hour : %d'%len(getIntervalsByHour(dt, RAW_DATA_PATH)))
-    print('#intervals in 3 hours: %d'%len(getIntervals(dt, dt+timedelta(hours=3), RAW_DATA_PATH)))
-
-    dt1 = datetime.strptime('2017-09-30 09:50:00', "%Y-%m-%d %H:%M:%S")
-    dt2 = datetime.strptime('2017-09-30 10:0:00', "%Y-%m-%d %H:%M:%S")
-    print('#intervals with bug: %d'%len(getIntervals(dt1, dt2, RAW_DATA_PATH)))

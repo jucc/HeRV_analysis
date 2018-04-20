@@ -77,6 +77,10 @@ def duration(start, stop):
     return  int((stop-start).seconds)
 
 
+def printhours(datelist):
+    for i in datelist:
+        print (i.hour, end=', ')
+
 if __name__ == '__main__':
     RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0" 
     filenames = list(getFilenames(dirname=RAW_DATA_PATH, regexp= r".*\.csv$"))

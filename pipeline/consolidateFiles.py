@@ -15,17 +15,16 @@ import parseActivityFiles as paf
 #pun intended :)
 
 
-def sessions_with_beats(dirname, verbose=True):
+def sessions_add_beats(sessions, dirname, verbose=True):
     """
-    for each session read from activity files, adds the corresponding list of RR
-    intervals contained in the time frame between its start and stop
+    for each session, the list of RR intervals between its start and stop
+    is added to its attributes
+    * Not a pure function, will alter the sessions input parameter * 
     """
-
-    sessions = paf.parseActivityFiles(dirname, verbose)
 
     for sess in sessions:
         sess['duration'] = int((sess['stop']-sess['start']).seconds)
-        sess['rr'] = pif.getIntervals(sess['start'], sess['stop'], dirname)
+        sess['rr'] = pif.get_intervals(sess['start'], sess['stop'], dirname)
         if verbose:
             print(print_summary(sess))
 

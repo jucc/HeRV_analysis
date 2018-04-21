@@ -123,25 +123,13 @@ def print_header():
     return "user, activity, posture, start, stop, duration, intervals"
 
 
-if __name__ == '__main__':
 
-    user = 0
-    DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\Data"
-    RAW_DATA_PATH = DATA_PATH + "\\Raw\\%d"%user
-    PRE_DATA_PATH = DATA_PATH + "\\PreProcessed\\%d"%user
-
-    data = sessions_with_beats(RAW_DATA_PATH, verbose=False)
-    valid = valid_sessions(data, 300)
-    print("%d valid sessions out of of %d registered"%(len(valid), len(data)))
-
-    slist = open(PRE_DATA_PATH + '\\sessions.csv', 'w')
-    slist.write(print_header()+'\n')
-    for se in valid:
-        slist.write(print_summary(se, forsheet=True, user=user)+'\n')
-        rrfilename = '%s\\%s-%s.csv'%(PRE_DATA_PATH, se['activity'], csvu.stringFromTimeFilename(se['start']))
-        rrf = open(rrfilename, 'w')
-        for rr in se['rr']:
-            #rrf.write("%s, %d\n"%(stringFromTimeKubios(rr['date']), int(rr['interval'])))
-            rrf.write("%d\n"%(int(rr['interval'])))
-        rrf.close()
-    slist.close()
+"""
+converts a list of beats (each item being a dict with two entries, date and interval)
+into two lists, one with the dates values and one with the intervals values
+Useful for plotting
+note: maybe python has a smart way to do this already?
+"""
+def beats_to_lists(beatlist):
+    xs = [(f['date'], f['interval']) for f in beatlist]
+    return zip(*xs)

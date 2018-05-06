@@ -84,11 +84,21 @@ def beatlist(beats):
     return np.array([x['interval'] for x in beats])
 
 
-def calc_metrics(beatlist):
-    td = time_domain(beatlist)
-    fd = frequency_domain(beatlist)
+def features_from_list(rrlist):
+    """
+    calculates time and frequency domain features from a list of RR interval values (no timestamp)
+    """
+    td = time_domain(rrlist)
+    fd = frequency_domain(rrlist)
     td.update(fd)
     return td
+
+
+def features_from_dic(beats):
+    """
+    calculates time and frequency domain features from a dic of beats (timestamp + RR interval value)
+    """ 
+    return features_from_list(beatlist(beats))
 
 
 def aggregate_data(frag, dirname):
@@ -96,7 +106,7 @@ def aggregate_data(frag, dirname):
     add time domain and frequency domain metrics for the beats in the fragment
     """
     agg = frag
-    agg.update(calc_metrics(beatlist(beats_in_fragment(frag, dirname))))
+    agg.update(features_from_dic(beats_in_fragment(frag, dirname)))
     return agg
 
 

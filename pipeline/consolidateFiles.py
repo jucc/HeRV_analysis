@@ -48,27 +48,36 @@ def fragment_sessions(sessions, duration=300, discard=90):
     print("%d valid sessions out of %d total (at least one full fragment of %d seconds after discarding first %d seconds)"
           %(len(vsessions), len(sessions), duration, discard))
 
-    s_id = 0
     frags = []
     for sess in vsessions:
-        f_id = 0
-        fstop = sess['start'] + timedelta(seconds=discard)
-        while True:
-            fstart = fstop
-            fstop = fstart + timedelta(seconds=duration)
-            if fstop > sess['stop']:
-                break
-            frags.append({'start':fstart, 'stop':fstop, 
-                          'activity':sess['activity'], 'posture':sess['posture'],
-                          'user':sess['user'],
-                          'sess':s_id, 'order':f_id})
-            f_id = f_id +1
-
-        s_id = s_id + 1
-
+        frags.extend(frags_session(sess, discard, duration))
     return frags
 
 
+def frags_session(sess, discard, duration):
+    """
+    breaks a session into fragments of 'duration' seconds after discarding
+    'discard' seconds in the beginning of the session. Will return a list of frags, 
+    which is empty if the session does not contain at least one full fragment 
+    according to these values
+    """
+    f_id = 0
+    frags = []
+    fstop = sess['start'] + timedelta(seconds=discard)
+    while True:
+        fstart = fstop
+        fstop = fstart + timedelta(seconds=duration)
+        if fstop > sess['stop']:
+            break
+        frags.append({'start':fstart, 'stop':fstop, 
+                      'activity':sess['activity'], 'posture':sess['posture'],
+                      'user':sess['user'],
+                      'sess':sess['sess_id'], 'order':f_id})
+        f_id = f_id +1
+
+    return frags
+
+        
 def beats_in_fragment(frag, dirname='.'):
     """
     lists RR intervals recorded in the duration of the fragment (in the form of dics

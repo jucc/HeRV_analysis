@@ -1,8 +1,14 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
+from datetime import datetime
 import parseIntervalFiles as pif
+
+
+features_fd = ['hf', 'lf', 'lf_hf', 'vlf']
+features_td = ['mhr', 'mrri', 'sdnn', 'pnn50', 'rmssd']
+
+features_all = []
+features_all.extend(features_td)
+features_all.extend(features_fd)
+
 
 def clean_rr_series(rr, min=300, max=1800):
     """

@@ -1,14 +1,7 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import plotly.offline as pl
-pl.init_notebook_mode(connected=True)
 import plotly.graph_objs as go
 
-from datetime import datetime, timedelta
-import parseIntervalFiles as pif
-import parseActivityFiles as paf
-#pun intended :)
 import datacleaning as cl
 
 
@@ -34,3 +27,16 @@ def plot_sess_rr(sess, path, title='Time series and Histogram'):
     """
     rr = cl.get_clean_intervals_from_dic(sess, path)
     plot_series_with_hist(rr)
+
+
+def boxplot_compare(df, feature, groupby, min_examples=3):
+    
+    data = []
+
+    for val in df[groupby].unique():
+        if len(df[df[groupby]==val]) >= min_examples:
+            data.append(go.Box(y=df.loc[df[groupby]==val, feature], name=val, showlegend=False))
+        
+    layout = go.Layout(yaxis=dict(title=feature, zeroline=False))
+    fig = go.Figure(data=data, layout=layout)
+    pl.iplot(fig)   

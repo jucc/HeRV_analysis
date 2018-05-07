@@ -100,6 +100,7 @@ def features_from_list(rrlist):
     td = time_domain(rrlist)
     fd = frequency_domain(rrlist)
     td.update(fd)
+    features = ['mrr', ]
     return td
 
 
@@ -114,6 +115,7 @@ def aggregate_data(frag, dirname):
     """
     add time domain and frequency domain metrics for the beats in the fragment
     """
+
     agg = frag
     agg.update(features_from_dic(beats_in_fragment(frag, dirname)))
     return agg
@@ -140,15 +142,3 @@ def print_header():
     print header for session summary csv file containing
     """
     return "user, activity, posture, start, stop, duration, intervals"
-
-
-
-"""
-converts a list of beats (each item being a dict with two entries, date and interval)
-into two lists, one with the dates values and one with the intervals values
-Useful for plotting
-note: maybe python has a smart way to do this already?
-"""
-def beats_to_lists(beatlist):
-    xs = [(f['date'], f['interval']) for f in beatlist]
-    return zip(*xs)

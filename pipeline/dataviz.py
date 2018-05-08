@@ -29,8 +29,7 @@ def plot_sess_rr(sess, path, title='Time series and Histogram'):
     plot_series_with_hist(rr)
 
 
-def boxplot_compare(df, feature, groupby, min_examples=3):
-    
+def boxplot_compare(df, feature, groupby, min_examples=3):    
     data = []
 
     for val in df[groupby].unique():
@@ -39,4 +38,17 @@ def boxplot_compare(df, feature, groupby, min_examples=3):
         
     layout = go.Layout(yaxis=dict(title=feature, zeroline=False))
     fig = go.Figure(data=data, layout=layout)
-    pl.iplot(fig)   
+    pl.iplot(fig)
+
+
+def trace_sess_fragments(frags, activities, filter=1):
+    
+    copy = frags.copy()
+
+    if filter > 1:
+        if filter%2 == 0:
+            filter = filter+1
+        for activity in activities:        
+            copy[activity] = copy[activity].rolling(window=7, center=True).median()
+
+    return [go.Scatter(x=copy['order'], y=copy[activity], name=activity) for activity in activities]

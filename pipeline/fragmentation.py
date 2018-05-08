@@ -1,6 +1,14 @@
 import pandas as pd
 import consolidateFiles as cf
+import datacleaning as cl
 
+
+def get_interval_data(frags, path):
+    for i, f in enumerate(frags):
+        if i % 100 == 0:
+            print (i, '/', len(frags))
+        f['rr'] = cf.beats_in_fragment(f, path)
+    return frags
 
 def gen_fragments_dataset(sessions, duration, crop, path):
     
@@ -8,8 +16,7 @@ def gen_fragments_dataset(sessions, duration, crop, path):
     frags = cf.fragment_sessions(sessions, duration, crop)
 
     # retrieve RR data
-    for f in frags:
-        f['rr'] = cf.beats_in_fragment(f, path)
+    frags = get_interval_data(frags, path)
     
     # [cleaning] remove RR artifacts
     df = pd.DataFrame(frags)

@@ -52,3 +52,15 @@ def trace_sess_fragments(frags, activities, filter=1):
             copy[activity] = copy[activity].rolling(window=7, center=True).median()
 
     return [go.Scatter(x=copy['order'], y=copy[activity], name=activity) for activity in activities]
+
+def bargroup(df, labels, val_col):
+
+    ddf = df.loc[(df['classifier'] == 'rf') & (df['crop'] == 120) & (df['label']=='move')]
+    data = []
+
+    for label in labels:
+        data.append(go.Bar(x=ddf[label], y=ddf[val_col], name=label))
+
+    layout = go.Layout(barmode='group')
+    fig = go.Figure(data=data, layout=layout)
+    return fig

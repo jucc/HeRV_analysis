@@ -5,12 +5,12 @@ import datacleaning as cl
 
 def get_interval_data(frags, path):
     for i, f in enumerate(frags):
-        if i % 100 == 0:
+        if i % 1000 == 0:
             print (i, '/', len(frags))
         f['rr'] = cf.beats_in_fragment(f, path)
     return frags
 
-def gen_fragments_dataset(sessions, duration, crop, path):
+def gen_fragments_dataset(sessions, duration, crop, path, mindata=0.83, maxpower=7500):
     
     # define fragments
     frags = cf.fragment_sessions(sessions, duration, crop)
@@ -24,16 +24,18 @@ def gen_fragments_dataset(sessions, duration, crop, path):
     df['beatcount'] = df['rr'].apply(len)
 
     # [cleaning] remove fragments with too few beats
-    df = df[df['beatcount'] > 0.6 * duration]
+    dfc = df[df['beatcount'] > mindata * duration]
 
     # aggregate in features TODO do this without converting to dic
-    dic = df.to_dict(orient='records')
+    dic = dfc.to_dict(orient='records')
     for i in dic:
         i.update(cf.features_from_dic(i['rr']))
-    df = pd.DataFrame(dic)
+    dfc = pd.DataFrame(dic)
     
     # [cleaning] remove HF outliers possibly caused by gaps in sequences
-    df = df[df['hf'] < 15000]
+    dfc = dfc[(dfc['hf'] < maxpower) & (dfc['hf'] < maxpower)]
 
-    return df.drop(['rr'], axis = 1)
+    print(len(df), 'total frags and', len(dfc), 'kept')
+
+    return dfc.drop(['rr'], axis = 1)
 

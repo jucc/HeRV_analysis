@@ -46,7 +46,7 @@ def full_classification(classifiers, durations, crops, features, onehotlabels, u
     
             r = multiclassifier(classifiers, train, test, features, onehotlabels)
             for f in r:
-                f.update({'duration': dur, 'crop': crop})
+                f.update({'duration': dur, 'crop': crop, 'user': user})
 
             results.extend(r)
 

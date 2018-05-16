@@ -100,10 +100,8 @@ def clf_svm_rbf(df_train, feature_cols, labelName='activity', C=10, gamma=0.1):
 
 def clf_rf(df_train, features, labels):  
     """
-    create and fit#  a random forest classifier
+    create and fit a random forest classifier
     """
-    print (labels)
-    print (features)
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)    
     clf.fit(X=df_train[features], y=df_train[labels])
     return clf

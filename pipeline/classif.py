@@ -31,6 +31,16 @@ def fit_binary(clf, train, test, features, label):
     return result
 
 
+def fit_multiclass(clf, train, test, features, label):
+    clf.fit(X=train[features], y=train[label])
+    y_true = test[label]
+    y_pred = clf.predict(X=test[features])
+    result = report_binary(y_true, y_pred)
+    score = clf.score(X=test[features], y=y_true)
+    result.update({'label': label, 'score': score})
+    return result
+
+
 def multiclassifier_binary(classifiers, train, test, features, onehotlabels):
     results = []
     for key, clf in classifiers.items():

@@ -5,30 +5,80 @@ from plotly import tools
 
 import datacleaning as cl
 
+"""
+SERIES AND FEATURES DATAVIZ FOR SESSIONS/FRAGMENTS/CONTINUOUS TIME
+"""
 
-
-def plot_series_with_hist(rr, title='timeseries'):
+def plot_series(rr, hist=True):
     """
-    plots the series of RR intervals for user between start and stop datetimes
+    plotly traces for the series of RR intervals for user between start and stop datetimes
+    and, optionally, its distribution histogram
     """
     x1, x2 = cl.beats_to_lists(rr)
 
-    trace1 = [go.Scatter(x=x1, y=x2)]
-    trace2 = [go.Histogram(x=x2)]
+    traces = [[go.Scatter(x=x1, y=x2)]]
+    if (hist):
+        traces.append([go.Histogram(x=x2)])
     
-    layout = go.Layout(title=title)
-
-    pl.iplot(trace1, layout)
-    pl.iplot(trace2, layout)
+    return traces
 
 
-def plot_sess_rr(sess, path, title='Time series and Histogram'):
-    """    
-    sess can be a row from df or dic containing an 'rr' key with a list of beats (in dic form)
+def plot_sess_series(sess, path, hist=True):
+    """
+    plotly trace for the cleaned up rr series contained in sess, where sess can be either
+    a DataFrame row or any dic containing an 'rr' key with a list of beats
     """
     rr = cl.get_clean_intervals_from_dic(sess, path)
-    plot_series_with_hist(rr)
+    return plot_series(rr, hist)
 
+
+def plot_features(frags, activities, filter=1):
+    """
+    plotly trace for the evolution of features in contiguous fragments,
+    optionally filtered through a moving median
+    """
+    if filter > 1:
+        if filter%2 == 0:
+            filter = filter+1
+    else:
+        filter = 1
+
+    copy = frags.copy() # use a copy to smooth so that original data is not altered    
+    for activity in activities:        
+        copy[activity] = copy[activity].rolling(window=filter, center=True).median()
+
+    return [go.Scatter(x=copy['order'], y=copy[activity], name=activity) for activity in activities]
+
+
+def plot_sess_features(sess, fdf, feats=['rmssd', 'mhr', 'sdnn', 'pnn50']):
+    """
+    plotly trace for the evolution of features in a session
+    """   
+    pp = fdf.loc[fdf['sess'] == sess['sess_id']].sort_values(by=['order'], ascending=True)
+    return plot_features(pp, feats, filter=3)
+
+
+def full_plot_sess(sess, fdf, path):
+    """
+    actually plots the time series and features for a given session
+    TODO still needs the frag db as an argument, improve later
+    """
+    print ("SESSION ID: ", sess['sess_id'])
+    print ("ACTIVITY: "  , sess['activity'])
+    print ("USER: "  , sess['user'])
+    print ("TIME: "  , sess['start'])
+
+    tr1 = plot_sess_series(sess, path, hist=False)[0]  
+    tr2 = plot_sess_features(sess, fdf)
+
+    pl.iplot(tr1)
+    pl.iplot(tr2)
+
+    
+
+"""
+GROUPED VIEWS OF FEATURES
+"""
 
 def boxplot_compare(df, feature, groupby, min_examples=3):    
     data = []
@@ -42,17 +92,10 @@ def boxplot_compare(df, feature, groupby, min_examples=3):
     pl.iplot(fig)
 
 
-def trace_sess_fragments(frags, activities, filter=1):
-    
-    copy = frags.copy()
 
-    if filter > 1:
-        if filter%2 == 0:
-            filter = filter+1
-        for activity in activities:        
-            copy[activity] = copy[activity].rolling(window=7, center=True).median()
-
-    return [go.Scatter(x=copy['order'], y=copy[activity], name=activity) for activity in activities]
+"""
+GRAPHS IN RESULTS PRESENTATIONS
+"""
 
 def bargroup(df, d1, d2, d3, dz):
 
@@ -84,3 +127,5 @@ def bar_results(df, d1, d2, d3, dz):
         layout = go.Layout(barmode='group', title=x1)
         fig = go.Figure(data=data, layout=layout)
         pl.iplot(fig)
+
+

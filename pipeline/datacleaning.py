@@ -2,8 +2,8 @@ from datetime import datetime
 import parseIntervalFiles as pif
 
 
-features_fd = ['hf', 'lf', 'lf_hf', 'vlf']
-features_td = ['mrri', 'sdnn', 'pnn50', 'rmssd']
+features_fd = ['hfnu', 'lfnu', 'lf_hf', 'vlf']
+features_td = ['mhr', 'mrri', 'sdnn', 'pnn50', 'rmssd']
 
 features_all = []
 features_all.extend(features_td)

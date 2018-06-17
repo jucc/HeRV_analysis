@@ -13,8 +13,33 @@ cred = credentials.Certificate(keyfile)
 default_app = firebase_admin.initialize_app(cred, options={'databaseURL': databaseURL})
 client = firestore.client()
 
-# print all documents in the users collection
+# insert users
+
 u_ref = client.collection('users')
+
+u_ref.document(u'0').set({
+    u'age': 34,
+    u'gender': u'F',
+    u'height': 150,
+    u'weight': 80
+})
+
+u_ref.document(u'1').set({
+    u'age': 32,
+    u'gender': u'M',
+    u'height': 171,
+    u'weight': 66
+})
+
+u_ref.document(u'2').set({
+    u'age': 31,
+    u'gender': u'M',
+    u'height': 170,
+    u'weight': 70
+})
+
+
+# print all documents in the users collection
 users = u_ref.get()
 for doc in users:
     print(u'Document data: {}'.format(doc.to_dict()))

@@ -14,6 +14,7 @@ import classif
 def fit_test(clf, df, features, label='activity'):
 
     train, test = hp.preprocess(df, features)
+
     clf.fit(X=train[features], y=train[label])
     y_true = test[label]
     y_pred = clf.predict(X=test[features])
@@ -79,7 +80,7 @@ def prfs_report(ytrue, ypred):
     return result
 
 
-def classif_summary(clf, df, features, label):    
+def classif_summary(clf, df, features, label):
     yt, yp = fit_test(clf, df, features, label)
     return prfs_report(yt, yp)
 
@@ -90,6 +91,7 @@ def multiclass_classif_table(durations, crops, classifiers, features, label, pat
         for crop in crops:
             filename = build_filename(path, duration, crop)
             dfi = pd.read_excel(filename)
+            dfi = dfi[dfi['gr_main3'].isin(['still', 'sleep', 'move'])]
             for key, clf in classifiers.items():
                 if user != -1:
                     dfi = dfi.loc[dfi['user']==user]

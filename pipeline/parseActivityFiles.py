@@ -92,9 +92,3 @@ def stop_session(row, sess):
     sess['stop'] = csvu.timeFromString(row[0])
     sess['duration'] = csvu.duration(sess['start'], sess['stop'])
     return sess
-
-
-
-if __name__ == '__main__':
-    RAW_DATA_PATH = "C:\\Users\\julia\\Google Drive\\Academics\\Mestrado\\HeRV\\RawData\\0"
-    print(get_user_sessions(RAW_DATA_PATH, True)[0])

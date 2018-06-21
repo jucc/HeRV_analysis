@@ -39,7 +39,6 @@ def getIntervalsFromFile(filename):
     return rows
 
 
-
 """
 lists all intervals in a given hour
 @param[in] dt - datetime with the hour queried. Minutes and seconds will be disregarded
@@ -62,8 +61,17 @@ def fullhours(start_dt, end_dt):
     start = start_dt.replace(minute=0, second=0)
     while start < end_dt:
         yield start
-        start = start + timedelta(hours=1)
-   
+        start = start + timedelta(hours=1)   
+
+
+"""
+iterate over every day between two datetimes 
+"""
+def gendays(start_dt, end_dt):
+    start = start_dt.replace(hour=0, minute=0, second=0)
+    while start < end_dt:
+        yield start
+        start = start + timedelta(days=1)
     
 """
 lists all intervals recorded in the period of time between start_dt and end_dt
@@ -84,7 +92,6 @@ def get_day_intervals(year, month, day, dirname):
     stamp = "%Y-%m-%d %H:%M:%S"
     beg = datetime.strptime(date + '00:00:00', stamp)
     end = datetime.strptime(date + '23:59:00', stamp)
-
     return get_intervals(beg, end, dirname)
 
 

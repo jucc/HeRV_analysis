@@ -1,41 +1,70 @@
 import pandas as pd
+import parseIntervalFiles as pif
 import consolidateFiles as cf
 import datacleaning as cl
 
+from datetime import timedelta
 
-def get_interval_data(frags, path):
-    for i, f in enumerate(frags):
-        if i % 1000 == 0:
-            print (i, '/', len(frags))
-        f['rr'] = cf.beats_in_fragment(f, path)
+
+def gen_fragments_dataset(sessions, duration, crop, mindata=0.83, maxpower=7500):  
+    """
+    breaks all sessions into fragments of 'duration' seconds after discarding
+    'crop' seconds in the beginning of the session. Sessions that do not
+    contain at least one full fragment according to these values are discarded
+    """
+    vsessions = cf.valid_sessions(sessions, crop+duration)
+    print("%d valid sessions out of %d total (at least one full fragment of %d seconds after discarding first %d seconds)"
+          %(len(vsessions), len(sessions), duration, crop))
+
+    frags = []
+    for sess in vsessions:
+        frags.extend(fragment_session(sess, duration, crop, mindata))
+    
+    # clean dataset
+    df = pd.DataFrame(frags)
+    df = df[df['beatcount'] > mindata * duration]
+    df = df[(df['hf'] < maxpower) & (df['lf'] < maxpower)]
+
+    print(len(frags), 'total frags found and', len(df), 'kept')
+
+    return df.drop(['rr'], axis = 1)
+
+
+def fragment_session(sess, duration, crop, mindata=0.83):
+    """
+    breaks a session into fragments of 'duration' seconds after discarding
+    'discard' seconds in the beginning of the session. Will return a list of frags, 
+    which is empty if the session does not contain at least one full fragment 
+    according to these values
+    """
+    f_id = 0
+    frags = []
+    fstop = sess['start'] + timedelta(seconds=crop)    
+    while True:
+        fstart = fstop
+        fstop = fstart + timedelta(seconds=duration)
+        if fstop > sess['stop']:
+            break
+        f = populate_fragment(sess, fstart, fstop, mindata * duration)
+        f['f_id'] = f_id
+        f_id = f_id +1
+        frags.append(f)
     return frags
 
-def gen_fragments_dataset(sessions, duration, crop, path, mindata=0.83, maxpower=7500):
+
+def populate_fragment(sess, fstart, fstop, minbeats):
+
+    # fill basic info and intervals
+    f = {'start':fstart, 'stop':fstop, 'user':sess['user'],
+        'activity':sess['activity'], 'posture':sess['posture'], 'sess':sess['sess_id'],
+        'rr': [x for x in sess['rr'] if x['date'] > fstart and x['date'] < fstop] }
+
+    # clean intervals
+    f['rr'] = cl.clean_rr_series(f['rr'])
+    f['beatcount'] = len(f['rr'])
+
+    # calculate aggregate features
+    if f['beatcount'] > minbeats:
+        f.update(cf.features_from_dic(f['rr']))
     
-    # define fragments
-    frags = cf.fragment_sessions(sessions, duration, crop)
-
-    # retrieve RR data
-    frags = get_interval_data(frags, path)
-    
-    # [cleaning] remove RR artifacts
-    df = pd.DataFrame(frags)
-    df['rr'] = df['rr'].apply(cl.clean_rr_series)
-    df['beatcount'] = df['rr'].apply(len)
-
-    # [cleaning] remove fragments with too few beats
-    dfc = df[df['beatcount'] > mindata * duration]
-
-    # aggregate in features TODO do this without converting to dic
-    dic = dfc.to_dict(orient='records')
-    for i in dic:
-        i.update(cf.features_from_dic(i['rr']))
-    dfc = pd.DataFrame(dic)
-    
-    # [cleaning] remove HF outliers possibly caused by gaps in sequences
-    dfc = dfc[(dfc['hf'] < maxpower) & (dfc['hf'] < maxpower)]
-
-    print(len(df), 'total frags and', len(dfc), 'kept')
-
-    return dfc.drop(['rr'], axis = 1)
-
+    return f

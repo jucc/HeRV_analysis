@@ -15,12 +15,7 @@ def plot_series(rr, hist=True):
     and, optionally, its distribution histogram
     """
     x1, x2 = cl.beats_to_lists(rr)
-
-    traces = [[go.Scatter(x=x1, y=x2)]]
-    if (hist):
-        traces.append([go.Histogram(x=x2)])
-    
-    return traces
+    return [go.Scatter(x=x1, y=x2)]
 
 
 def plot_sess_series(sess, path, hist=True):
@@ -47,14 +42,14 @@ def plot_features(frags, activities, filter=1):
     for activity in activities:        
         copy[activity] = copy[activity].rolling(window=filter, center=True).median()
 
-    return [go.Scatter(x=copy['order'], y=copy[activity], name=activity) for activity in activities]
+    return [go.Scatter(x=copy['f_id'], y=copy[activity], name=activity) for activity in activities]
 
 
 def plot_sess_features(sess, fdf, feats=['rmssd', 'mhr', 'sdnn', 'pnn50']):
     """
     plotly trace for the evolution of features in a session
-    """   
-    pp = fdf.loc[fdf['sess'] == sess['sess_id']].sort_values(by=['order'], ascending=True)
+    """
+    pp = fdf.loc[fdf['sess'] == sess['sess_id']].sort_values(by=['f_id'], ascending=True)
     return plot_features(pp, feats, filter=3)
 
 
@@ -68,7 +63,7 @@ def full_plot_sess(sess, fdf, path):
     print ("USER: "  , sess['user'])
     print ("TIME: "  , sess['start'])
 
-    tr1 = plot_sess_series(sess, path, hist=False)[0]  
+    tr1 = plot_sess_series(sess, path, hist=False)
     tr2 = plot_sess_features(sess, fdf)
 
     pl.iplot(tr1)

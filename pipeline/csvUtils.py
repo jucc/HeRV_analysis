@@ -12,60 +12,31 @@ import csv
 from datetime import datetime
 
 """
-Iterator yielding all filenames in a directory that match a given regexp
+lists all filenames in a directory that match a given regexp
 """
-def getFilenames(dirname=".", regexp= r".*\.csv"):
+def get_filenames(dirname=".", regexp= r".*\.csv"):
     match_files = filter(lambda x: re.match(regexp, x), os.listdir(path=dirname))
     return [os.path.join(dirname, x) for x in match_files]
 
 
 """
-Iterator yielding all non-empty rows in a csv file.
-Each row is a list of columns
+lists all non-empty rows in a csv file. Each row is a list of columns
 """
-def getFileReader(filename):
+def get_rows(filename):
     reader = csv.reader(open(filename, 'r').readlines(), delimiter=',')
     return [line for line in reader if any(line)]
 
 
-"""
-Iterator yielding all non-empty rows in all csv files in a directory
-Optional argument: regexp to filter for filenames
-"""
-# def getDirReader(filename):
-# TODO generator that includes all generators for files in this dir  
-
-       
-        
-"""
-lists all rows in all csv files in a directory
-Optional argument: regexp to filter for filenames
-"""
-#def getRowsFromDir(dirname=".", regexp= r"*.csv"):
-#    os.chdir(dirname)
-#    rows = []
-#    for file in getFilenames(dirname, regexp):
-#        rows.extend(getRowsFromFile(file))
-#    return rows
-
-
-
-def stringFromTimeKubios(timestr):
+def string_from_time_kubios(timestr):
     return datetime.strftime(timestr, "%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 
-def stringFromTimeFilename(timestr):
+def string_from_time_filename(timestr):
     return datetime.strftime(timestr, "%y-%m-%d-%H-%M")
 
-#def timeFromStringFull(timestr):
-#    return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
 
-#def timeFromStringNonPadUS(timestr):
-#    return datetime.strptime(timestr, "%m/%d/%y %H:%M")
-
-def timeFromString(timestr):
+def time_from_string(timestr):
     patterns = ["%Y-%m-%d %H:%M:%S", "%m/%d/%y %H:%M"]
-
     for pattern in patterns:
         try:
             return datetime.strptime(timestr, pattern)

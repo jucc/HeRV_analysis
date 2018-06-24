@@ -4,7 +4,7 @@
 uses parseIntervalFiles.py and parseAcrtivityFiles.py to read raw csv files and
 generates consolidated files in formats  R and/or Kubios
 """
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 import numpy as np
 from hrv.classical import time_domain, frequency_domain
 from os import path
@@ -13,6 +13,28 @@ import csvUtils as csvu
 import parseIntervalFiles as pif
 import parseActivityFiles as paf
 #pun intended :)
+
+
+def get_user_sessions(user, start_dt, end_dt, dirname='.', verbose=True):
+    """
+    extract list of sessions from all activity files of a given user
+    (only the session descriptions, not the intervals)
+    """
+    sessions = []
+    errors = 0
+    for day in pif.gendays(start_dt, end_dt):
+        file = paf.get_day_file(user, day, dirname)        
+        if file:
+            if verbose:
+                print('reading %s ... '%file.split('\\')[-1])
+            (f_sessions, f_errors) = paf.extract_sessions(file, verbose)
+            sessions.extend(f_sessions)
+            errors += f_errors
+    for sess in sessions:
+        sess.update({"user": user})
+    if verbose:
+        print("%d sessions extracted and %d errors found"%(len(sessions), errors))
+    return sessions
 
 
 def sessions_add_beats(sessions, dirname, verbose=True):
@@ -24,7 +46,7 @@ def sessions_add_beats(sessions, dirname, verbose=True):
 
     for sess in sessions:
         sess['duration'] = int((sess['stop']-sess['start']).seconds)
-        sess['rr'] = pif.get_intervals(sess['start'], sess['stop'], dirname)
+        sess['rr'] = pif.get_intervals(sess['user'], sess['start'], sess['stop'], dirname)
         if verbose:
             print(print_summary(sess))
 
@@ -36,54 +58,6 @@ def valid_sessions(sessions, min_len):
     filters only sessions with at least min_len
     """
     return [sess for sess in sessions if sess['duration'] >= min_len]
-
-
-def fragment_sessions(sessions, duration=300, discard=90):
-    """
-    breaks all sessions into fragments of 'duration' seconds after discarding
-    'discard' seconds in the beginning of the session. Sessions that do not
-    contain at least one full fragment according to these values are discarded
-    """
-    vsessions = valid_sessions(sessions, discard+duration)
-    print("%d valid sessions out of %d total (at least one full fragment of %d seconds after discarding first %d seconds)"
-          %(len(vsessions), len(sessions), duration, discard))
-
-    frags = []
-    for sess in vsessions:
-        frags.extend(frags_session(sess, discard, duration))
-    return frags
-
-
-def frags_session(sess, discard, duration):
-    """
-    breaks a session into fragments of 'duration' seconds after discarding
-    'discard' seconds in the beginning of the session. Will return a list of frags, 
-    which is empty if the session does not contain at least one full fragment 
-    according to these values
-    """
-    f_id = 0
-    frags = []
-    fstop = sess['start'] + timedelta(seconds=discard)
-    while True:
-        fstart = fstop
-        fstop = fstart + timedelta(seconds=duration)
-        if fstop > sess['stop']:
-            break
-        frags.append({'start':fstart, 'stop':fstop, 
-                      'activity':sess['activity'], 'posture':sess['posture'],
-                      'user':sess['user'],
-                      'sess':sess['sess_id'], 'order':f_id})
-        f_id = f_id +1
-
-    return frags
-
-        
-def beats_in_fragment(frag, dirname='.'):
-    """
-    lists RR intervals recorded in the duration of the fragment (in the form of dics
-    with datetime and value)
-    """
-    return pif.get_intervals(frag['start'], frag['stop'], path.join(dirname, str(frag['user'])))
 
 
 def beatlist(beats):
@@ -100,7 +74,6 @@ def features_from_list(rrlist):
     td = time_domain(rrlist)
     fd = frequency_domain(rrlist)
     td.update(fd)
-    features = ['mrr', ]
     return td
 
 
@@ -109,16 +82,6 @@ def features_from_dic(beats):
     calculates time and frequency domain features from a dic of beats (timestamp + RR interval value)
     """ 
     return features_from_list(beatlist(beats))
-
-
-def aggregate_data(frag, dirname):
-    """
-    add time domain and frequency domain metrics for the beats in the fragment
-    """
-
-    agg = frag
-    agg.update(features_from_dic(beats_in_fragment(frag, dirname)))
-    return agg
 
 
 def print_summary(sess, forsheet=False, user=''):

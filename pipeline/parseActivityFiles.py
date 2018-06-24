@@ -1,43 +1,38 @@
 # -*- coding: utf-8 -*-
 
 """
-Converts activities from old format to new format of sessions
-Example -
-OLD ACTIVITY (two events):
+Raads activity files and extracts sessions from them
+ACTIVITY FILE STRUCTURE (two events):
 datetime,start,activity-category,posture
 datetime,stop,,
-NEW SESSION:
-datetime-start,datetime-end,activity-name,posture,reliability,food-recent,caffeine-recent
+SESSION STRUCTURE:
+datetime-start,datetime-end,activity-name,posture,notes
 """
 from os import path
 import csvUtils as csvu
+from datetime import datetime
 
 
-def get_files(user, dirname='.'):
+def get_all_files(user, dirname='.'):
     """
     returns all activity files for a given user
     """
     user_path = path.join(dirname, str(user))
-    return list(csvu.getFilenames(user_path, r"^act.*"))
+    return list(csvu.get_filenames(user_path, r"^act.*"))
 
 
-def get_user_sessions(user, dirname='.', verbose=True):
+def get_day_file(user, dt, dirname='.'):
     """
-    extract list of sessions from all activity files of a given user
+    returns the activity file for a given user in a given day
     """
-    sessions = []
-    errors = 0
-    for file in get_files(user, dirname):
-        if verbose:
-            print('reading %s ... '%file.split('\\')[-1])
-        (f_sessions, f_errors) = extract_sessions(file, verbose)
-        sessions.extend(f_sessions)
-        errors += f_errors
-    for sess in sessions:
-        sess.update({"user": user})
-    if verbose:
-        print("%d sessions extracted and %d errors found"%(len(sessions), errors))
-    return sessions
+    user_path = path.join(dirname, str(user))
+    filepattern = datetime.strftime(dt, '%y%m%d')
+    regexp = r"^act%s" % (filepattern)
+    filelist = list(csvu.get_filenames(user_path, regexp))
+    if len(filelist) > 0:
+        return filelist[0]
+    else:
+        return None
 
 
 def extract_sessions(filename, verbose=True):
@@ -47,7 +42,7 @@ def extract_sessions(filename, verbose=True):
     sessions = []
     sess = {}
     excluded = 0
-    reader = csvu.getFileReader(filename)
+    reader = csvu.get_rows(filename)
     for row in reader:
 
         if isStartRow(row) and not started(sess):
@@ -70,6 +65,7 @@ def extract_sessions(filename, verbose=True):
 
     return (sessions, excluded)
 
+## HELPER FUNCTIONS (only relevant in this context)
 
 def isStartRow(row):
     return len(row) > 3 and row[1] == 'start'
@@ -81,7 +77,7 @@ def started(sess):
     return sess.get('start') != None
 
 def start_session(row):
-    sess = {'start': csvu.timeFromString(row[0]),
+    sess = {'start': csvu.time_from_string(row[0]),
             'activity': row[2],
             'posture': row[3]}
     if len(row) > 4:
@@ -89,6 +85,6 @@ def start_session(row):
     return sess
 
 def stop_session(row, sess):
-    sess['stop'] = csvu.timeFromString(row[0])
+    sess['stop'] = csvu.time_from_string(row[0])
     sess['duration'] = csvu.duration(sess['start'], sess['stop'])
     return sess

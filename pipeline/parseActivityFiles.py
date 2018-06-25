@@ -13,12 +13,26 @@ import csvUtils as csvu
 from datetime import datetime
 
 
-def get_all_files(user, dirname='.'):
+def get_sessions(user, start_day, end_day, dirname, verbose=False):
     """
-    returns all activity files for a given user
+    lists all user recorded activities between start and end date
     """
-    user_path = path.join(dirname, str(user))
-    return list(csvu.get_filenames(user_path, r"^act.*"))
+    sessions = []
+    for day in csvu.gendays(start_day, end_day):
+        for sess in get_day_sessions(user, day, dirname):
+            sessions.append(sess)
+    return sessions
+
+
+def get_day_sessions(user, day, dirname, verbose=False):
+    """
+    lists all user recorded activities in a given day
+    """
+    file = get_day_file(user, day, dirname)
+    if file:
+        return extract_sessions(file, verbose)
+    else:
+        return []
 
 
 def get_day_file(user, dt, dirname='.'):
@@ -35,10 +49,20 @@ def get_day_file(user, dt, dirname='.'):
         return None
 
 
-def extract_sessions(filename, verbose=True):
+def get_all_files(user, dirname='.'):
+    """
+    returns all activity files for a given user
+    """
+    user_path = path.join(dirname, str(user))
+    return list(csvu.get_filenames(user_path, r"^act.*"))
+
+
+def extract_sessions(filename, verbose=False):
     """
     extract list of sessions from an activity file
     """
+    if verbose:
+        print('parsing', filename)
     sessions = []
     sess = {}
     excluded = 0
@@ -63,7 +87,10 @@ def extract_sessions(filename, verbose=True):
             if verbose:
                 print(msg%row)
 
-    return (sessions, excluded)
+    if verbose:
+        print(excluded, 'sessions excluded')
+    
+    return sessions
 
 ## HELPER FUNCTIONS (only relevant in this context)
 

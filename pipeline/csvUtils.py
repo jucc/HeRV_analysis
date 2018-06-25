@@ -9,7 +9,7 @@ Methods returning iterators can be converted to lists by calling list(method())
 import os
 import re
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 """
 lists all filenames in a directory that match a given regexp
@@ -51,3 +51,23 @@ def duration(start, stop):
 def printhours(datelist):
     for i in datelist:
         print (i.hour, end=', ')
+
+
+def fullhours(start_dt, end_dt):
+    """
+    yields every full hour between two datetimes 
+    """
+    start = start_dt.replace(minute=0, second=0)
+    while start < end_dt:
+        yield start
+        start = start + timedelta(hours=1)   
+
+
+def gendays(start_dt, end_dt):
+    """
+    yields every day between two datetimes 
+    """
+    start = start_dt.replace(hour=0, minute=0, second=0)
+    while start < end_dt:
+        yield start
+        start = start + timedelta(days=1)

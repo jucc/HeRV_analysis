@@ -4,61 +4,61 @@
 uses parseIntervalFiles.py and parseAcrtivityFiles.py to read raw csv files and
 generates consolidated files in formats  R and/or Kubios
 """
-from datetime import timedelta, datetime, date
 import numpy as np
+import pandas as pd
+from datetime import timedelta, datetime, date
 from hrv.classical import time_domain, frequency_domain
 from os import path
 
 import csvUtils as csvu
 import parseIntervalFiles as pif
 import parseActivityFiles as paf
+import datacleaning as cl
 #pun intended :)
 
 
-def get_user_sessions(user, start_dt, end_dt, dirname='.', verbose=True):
+def gen_sessions_dataset(users, start_dt, end_dt, minrr=300, maxrr=1800, dirname='.', verbose=True):
     """
-    extract list of sessions from all activity files of a given user
-    (only the session descriptions, not the intervals)
+    generates a full session dataset, with cleaned up rr intervals and features
+    params
+    users: list of user ids to filter on. If empty, includes all users    
+    start_dt, end_dt: range of dates to include in the dataset
+    minrr, maxrr: acceptable range of RR intervals (intervals outiside the range are discarded)
     """
-    sessions = []
-    errors = 0
-    for day in pif.gendays(start_dt, end_dt):
-        file = paf.get_day_file(user, day, dirname)        
-        if file:
-            if verbose:
-                print('reading %s ... '%file.split('\\')[-1])
-            (f_sessions, f_errors) = paf.extract_sessions(file, verbose)
-            sessions.extend(f_sessions)
-            errors += f_errors
-    for sess in sessions:
-        sess.update({"user": user})
+    ds = []
+    discarded = 0
+    id = 0
+    for user in users:
+        usessions = paf.get_sessions(user, start_dt, end_dt, dirname)
+        for sess in usessions:
+            sess['user'] = user
+            sess = extract_sess_data(sess, minrr, maxrr, dirname)
+            if sess['beatscount'] > sess['duration'] * 0.5:
+                sess['sess_id'] = id
+                id = id+1
+                ds.append(sess)
+            else:
+                discarded = discarded + 1
     if verbose:
-        print("%d sessions extracted and %d errors found"%(len(sessions), errors))
-    return sessions
+        print (len(ds), 'sessions completed and', discarded, 'discarded for lack of RR data')
+    return ds
 
 
-def sessions_add_beats(sessions, dirname, verbose=True):
+def extract_sess_data(sess, minrr=300, maxrr=1800, dirname='.'):
     """
-    for each session, the list of RR intervals between its start and stop
-    is added to its attributes
-    * Not a pure function, will alter the sessions input parameter * 
+    adds interval and aggregate data to the session
+    TODO refactor separation of concerns
     """
-
-    for sess in sessions:
-        sess['duration'] = int((sess['stop']-sess['start']).seconds)
-        sess['rr'] = pif.get_intervals(sess['user'], sess['start'], sess['stop'], dirname)
-        if verbose:
-            print(print_summary(sess))
-
-    return sessions
-
-
-def valid_sessions(sessions, min_len):
-    """
-    filters only sessions with at least min_len
-    """
-    return [sess for sess in sessions if sess['duration'] >= min_len]
-
+    rr = pif.get_intervals(sess['user'], sess['start'], sess['stop'], dirname)
+    beats = len(rr)
+    rr = cl.clean_rr_series(rr, minrr, maxrr)
+    sess['rr'] = rr
+    sess['beatscount'] = len(rr)
+    sess['removed_artifacts'] = beats - sess['beatscount']
+    sess['duration'] = int((sess['stop']-sess['start']).seconds)    
+    sess.update(features_from_list(beatlist(rr)))
+    return sess
+    
 
 def beatlist(beats):
     """
@@ -69,19 +69,13 @@ def beatlist(beats):
 
 def features_from_list(rrlist):
     """
-    calculates time and frequency domain features from a list of RR interval values (no timestamp)
+    calcu
+    lates time and frequency domain features from a list of RR interval values (no timestamp)
     """
     td = time_domain(rrlist)
     fd = frequency_domain(rrlist)
     td.update(fd)
     return td
-
-
-def features_from_dic(beats):
-    """
-    calculates time and frequency domain features from a dic of beats (timestamp + RR interval value)
-    """ 
-    return features_from_list(beatlist(beats))
 
 
 def print_summary(sess, forsheet=False, user=''):

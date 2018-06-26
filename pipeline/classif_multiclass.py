@@ -47,10 +47,19 @@ def prfs_heatmap(ytrue, ypred, cs='RdBu'):
     return go.Figure(data=data, layout=layout)
 
 
-def cmatrix_heatmap(ytrue, ypred, cs='Reds'):
+def cmatrix_heatmap(ytrue, ypred):
     classes = unique_classes(ytrue)
+
+    whiteisnone=[[0.0, 'rgb(255,255,255)'], [0.1, 'rgb(190,245,235)'], 
+                 [0.2, 'rgb(170,225,215)'], [0.3, 'rgb(150,205,195)'], 
+                 [0.4, 'rgb(130,185,175)'], [0.5, 'rgb(110,165,155)'], 
+                 [0.6, 'rgb(90,145,135)'], [0.7, 'rgb(70,125,115)'], 
+                 [0.8, 'rgb(50,105,95)'], [0.9, 'rgb(30,85,75)'],
+                 [1.0, 'rgb(10,65,55)']]
+    
+    
     data = [go.Heatmap(z=confusion_matrix(ytrue, ypred, classes),
-                       x=classes, y=classes, colorscale=cs)]
+                       x=classes, y=classes, colorscale=whiteisnone)]
 
     layout = go.Layout(
         title = 'Confusion Matrix',

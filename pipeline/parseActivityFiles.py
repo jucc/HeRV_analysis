@@ -19,7 +19,7 @@ def get_sessions(user, start_day, end_day, dirname, verbose=False):
     """
     sessions = []
     for day in csvu.gendays(start_day, end_day):
-        for sess in get_day_sessions(user, day, dirname):
+        for sess in get_day_sessions(user, day, dirname, verbose):
             sessions.append(sess)
     return sessions
 

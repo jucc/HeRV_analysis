@@ -29,8 +29,10 @@ def gen_sessions_dataset(users, start_dt, end_dt, minrr=300, maxrr=1800, dirname
     discarded = 0
     id = 0
     for user in users:
-        usessions = paf.get_sessions(user, start_dt, end_dt, dirname)
+        usessions = paf.get_sessions(user, start_dt, end_dt, dirname, verbose)
         for sess in usessions:
+            if (verbose):
+                print('[',user,']', sess['activity'], sess['start'])
             sess['user'] = user
             sess = extract_sess_data(sess, minrr, maxrr, dirname)
             if sess['beatscount'] > sess['duration'] * 0.5:
@@ -52,11 +54,12 @@ def extract_sess_data(sess, minrr=300, maxrr=1800, dirname='.'):
     rr = pif.get_intervals(sess['user'], sess['start'], sess['stop'], dirname)
     beats = len(rr)
     rr = cl.clean_rr_series(rr, minrr, maxrr)
-    sess['rr'] = rr
-    sess['beatscount'] = len(rr)
+    sess['rr'] = rr    
+    sess['beatscount'] = len(rr)     
     sess['removed_artifacts'] = beats - sess['beatscount']
     sess['duration'] = int((sess['stop']-sess['start']).seconds)    
-    sess.update(features_from_list(beatlist(rr)))
+    if (sess['beatscount'] > 10):
+        sess.update(features_from_list(beatlist(rr)))
     return sess
     
 

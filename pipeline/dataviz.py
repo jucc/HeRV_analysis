@@ -39,8 +39,9 @@ def plot_features(frags, activities, filter=1):
         filter = 1
 
     copy = frags.copy() # use a copy to smooth so that original data is not altered    
-    for activity in activities:        
-        copy[activity] = copy[activity].rolling(window=filter, center=True).median()
+    for activity in activities:
+        if filter > 1:
+            copy[activity] = copy[activity].rolling(window=filter, center=True).median()
 
     return [go.Scatter(x=copy['f_id'], y=copy[activity], name=activity) for activity in activities]
 
@@ -49,8 +50,8 @@ def plot_sess_features(sess, fdf, feats=['rmssd', 'mhr', 'sdnn', 'pnn50']):
     """
     plotly trace for the evolution of features in a session
     """
-    pp = fdf.loc[fdf['sess'] == sess['sess_id']].sort_values(by=['f_id'], ascending=True)
-    return plot_features(pp, feats, filter=3)
+    pp = fdf.loc[fdf['sess_id'] == sess['sess_id']].sort_values(by=['f_id'], ascending=True)
+    return plot_features(pp, feats, filter=1)
 
 
 def full_plot_sess(sess, fdf, path):

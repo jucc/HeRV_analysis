@@ -55,15 +55,13 @@ def get_intervals_by_hour(dt, dirname="."):
         return []    
    
    
-def get_day_intervals(dt, dirname):
+def get_day_intervals(user, dt, dirname="."):
     """
     lists all intervals in a given day (year, month day, from 00:00 to 23:59)
-    """
-    date = str(dt.year) + '-' + str(dt.month) + '-' + str(dt.day) + ' '
-    stamp = "%Y-%m-%d %H:%M:%S"
-    beg = datetime.strptime(date + '00:00:00', stamp)
-    end = datetime.strptime(date + '23:59:00', stamp)
-    return get_intervals(beg, end, dirname)
+    """    
+    beg = dt.replace(hour=0, minute=0, second = 0)
+    end = dt.replace(hour=23, minute=59, second = 59)
+    return get_intervals(user, beg, end, dirname)
 
 
 def get_intervals(user, start_dt, end_dt, dirname="."):

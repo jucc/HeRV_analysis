@@ -23,14 +23,12 @@ end_dt = datetime(2018, 11, 1)
 
 
 def add_sessions(uid, start_dt, end_dt, source, dest):
-
     u_sess = paf.get_sessions(uid, start_dt, end_dt, source, verbose=False)
-    print(uid, ' - sessions:', len(u_sess))
-    
+    print('adding', len(u_sess), 'sessions for user', uid)
     s_ref = dest.document(str(uid)).collection('sessions')
     for sess in u_sess:
-        s_ref.document().set(sess)
-
+        name = paf.csvu.string_from_time_filename(sess['start'])
+        s_ref.document(name).set(sess)
     print ('sessions added to firestore...')
 
 
@@ -40,22 +38,32 @@ def add_intervals(uid, start_dt, end_dt, source, dest):
         day_rr = pif.get_day_intervals(uid, day, source)
         if len(day_rr) > 0:
             add_day_intervals(day, day_rr, rr_ref)
+    print ('intervals added to firestore')
 
 
 def add_day_intervals(day, day_rr, dest):
     dayname = datetime.strftime(day, "%Y%m%d")
-    day_ref = dest.document(dayname)
-    print('creating rr collection for day ', dayname, 'with len ', len(day_rr))
-    #     batch_op = client.batch()
+    dest.document(dayname).set({'rr_count': len(day_rr)})    
+    print(len(day_rr), 'RR intervals to add in', dayname)
     for h in range(0,24):
-        hour_ref = day_ref.collection(str(h))
-        hour_rr = [x for x in day_rr if x['date'].hour == h]
+        hour_rr = [x for x in day_rr if x['date'].hour == h] #obviously, break this better bc its an ordered seq
         if len(hour_rr) > 0:
-            print(h, len(hour_rr))            
-            for rr in hour_rr:    
-                name = str(rr['date'].minute).zfill(2) + str(rr['date'].second).zfill(2)
-                #hour_ref.document(name).set(rr['interval'])
-                print(name, rr['interval'])
+            href = dest.document(dayname).collection('minutes')
+            add_hour_intervals(h, hour_rr, href)
+
+
+def add_hour_intervals(h, rr, dest):    
+    print(h , ': ', len(rr))
+    for min in range(60):
+        miname = str(str(h).zfill(2) + str(min).zfill(2))
+        m = []
+        for s in range(60):            
+            srr = [x['interval'] for x in rr if x['date'].minute == min and x['date'].second == s]
+            if len(srr) > 0:
+                m.append({str(s): srr})
+        if len(m) > 0:
+            dest.document(miname).set({'intervals': m})
+
 
 ## Initializing a client to communicate with Firestore
 
@@ -70,6 +78,6 @@ print ("Connected to Firestore...")
 u_ref = client.collection('users')
 
 for doc in u_ref.get():
-    uid = int(doc.id)    
+    uid = int(doc.id)
     add_sessions(uid, start_dt, end_dt, source, u_ref)
     add_intervals(uid, start_dt, end_dt, source, u_ref)

@@ -22,48 +22,50 @@ start_dt = datetime(2017, 10, 29)
 end_dt = datetime(2018, 11, 1)
 
 
+def u_ref(db, uid):
+    return db.collection('users').document(str(uid))
+
 def add_sessions(uid, start_dt, end_dt, source, dest):
     u_sess = paf.get_sessions(uid, start_dt, end_dt, source, verbose=False)
     print('adding', len(u_sess), 'sessions for user', uid)
-    s_ref = dest.document(str(uid)).collection('sessions')
+    s_ref = u_ref(dest, uid).collection('sessions')
     for sess in u_sess:
         name = paf.csvu.string_from_time_filename(sess['start'])
         s_ref.document(name).set(sess)
-    print ('sessions added to firestore...')
 
 
 def add_intervals(uid, start_dt, end_dt, source, dest):
-    rr_ref = dest.document(str(uid)).collection('rr')
-    for day in pif.csvu.gendays(start_dt, end_dt):
-        day_rr = pif.get_day_intervals(uid, day, source)
-        if len(day_rr) > 0:
-            add_day_intervals(day, day_rr, rr_ref)
-    print ('intervals added to firestore')
+    for day in pif.csvu.gendays(start_dt, end_dt):        
+        add_day_intervals(uid, day, source, dest)
+                
+
+def add_day_intervals(uid, day, source, dest):    
+    day_rr = pif.get_day_intervals(uid, day, source)    
+    if len(day_rr) > 0:
+        dayname = datetime.strftime(day, "%Y%m%d")
+        rr_ref = u_ref(dest, uid).collection('rr')
+        rr_ref.document(dayname).set({'rr_count': len(day_rr)})
+        mref = rr_ref.document(dayname).collection('minutes')
+        for k, v in group_by_minute(day_rr).items():
+            mref.document(k).set(v)
+        print(len(day_rr), 'RR intervals added in', dayname)
 
 
-def add_day_intervals(day, day_rr, dest):
-    dayname = datetime.strftime(day, "%Y%m%d")
-    dest.document(dayname).set({'rr_count': len(day_rr)})    
-    print(len(day_rr), 'RR intervals to add in', dayname)
-    for h in range(0,24):
-        hour_rr = [x for x in day_rr if x['date'].hour == h] #obviously, break this better bc its an ordered seq
-        if len(hour_rr) > 0:
-            href = dest.document(dayname).collection('minutes')
-            add_hour_intervals(h, hour_rr, href)
-
-
-def add_hour_intervals(h, rr, dest):    
-    print(h , ': ', len(rr))
-    for min in range(60):
-        miname = str(str(h).zfill(2) + str(min).zfill(2))
-        m = []
-        for s in range(60):            
-            srr = [x['interval'] for x in rr if x['date'].minute == min and x['date'].second == s]
-            if len(srr) > 0:
-                m.append({str(s): srr})
-        if len(m) > 0:
-            dest.document(miname).set({'intervals': m})
-
+def group_by_minute(dayrr):
+    d = {}
+    #TODO obviously, this can be done without looping by splitting the list by h,m
+    for h in range(24):
+        for m in range(60):            
+            mrr = [x for x in dayrr if x['date'].hour == h and x['date'].minute == m]
+            if len(mrr) > 0:
+                miname = str(str(h).zfill(2) + str(m).zfill(2))
+                mi = {}
+                for s in range(60):
+                    srr = [x['interval'] for x in mrr if x['date'].second == s]
+                    if len(srr) > 0:
+                        mi[str(s)] = srr
+                d[miname] = mi
+    return d
 
 ## Initializing a client to communicate with Firestore
 
@@ -75,9 +77,9 @@ print ("Connected to Firestore...")
 
 ## for each user id in the database, search for sessions and intervals in csvs
 
-u_ref = client.collection('users')
+users = client.collection('users')
 
-for doc in u_ref.get():
+for doc in users.get():
     uid = int(doc.id)
-    add_sessions(uid, start_dt, end_dt, source, u_ref)
-    add_intervals(uid, start_dt, end_dt, source, u_ref)
+    #add_sessions(uid, start_dt, end_dt, source, client)
+    add_intervals(uid, start_dt, end_dt, source, client)

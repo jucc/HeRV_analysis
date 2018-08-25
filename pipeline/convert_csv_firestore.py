@@ -1,9 +1,10 @@
+import math
+from datetime import datetime
+
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 from firebase_admin import firestore
-
-from datetime import datetime
 
 import parseIntervalFiles as pif
 import parseActivityFiles as paf
@@ -43,13 +44,25 @@ def add_day_intervals(uid, day, source, dest):
     day_rr = pif.get_day_intervals(uid, day, source)    
     if len(day_rr) > 0:
         dayname = datetime.strftime(day, "%Y%m%d")
+        print('adding', len(day_rr), 'RR intervals in', dayname)
         rr_ref = u_ref(dest, uid).collection('rr')
         rr_ref.document(dayname).set({'rr_count': len(day_rr)})
         mref = rr_ref.document(dayname).collection('minutes')
-        for k, v in group_by_minute(day_rr).items():
-            mref.document(k).set(v)
-        print(len(day_rr), 'RR intervals added in', dayname)
+        for minutes in batch(group_by_minute(day_rr)):
+            print ('adding batch with', len(minutes), 'minutes')
+            gr = dest.batch()
+            for (k, v) in minutes:
+                doc = mref.document(k) 
+                gr.set(doc, v)
+            gr.commit()
 
+
+def batch(d, n=500):
+    x = len(d)
+    l = list(d.items())
+    for ndx in range(0, x, n):
+        yield l[ndx:min(ndx + n, x)]
+    
 
 def group_by_minute(dayrr):
     d = {}
@@ -81,5 +94,5 @@ users = client.collection('users')
 
 for doc in users.get():
     uid = int(doc.id)
-    #add_sessions(uid, start_dt, end_dt, source, client)
+    add_sessions(uid, start_dt, end_dt, source, client)
     add_intervals(uid, start_dt, end_dt, source, client)

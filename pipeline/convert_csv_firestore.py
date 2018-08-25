@@ -30,28 +30,31 @@ def add_sessions(uid, start_dt, end_dt, source, dest):
     u_sess = paf.get_sessions(uid, start_dt, end_dt, source, verbose=False)
     print('adding', len(u_sess), 'sessions for user', uid)
     s_ref = u_ref(dest, uid).collection('sessions')
+    b = dest.batch()
     for sess in u_sess:
         name = paf.csvu.string_from_time_filename(sess['start'])
-        s_ref.document(name).set(sess)
+        doc = s_ref.document(name)
+        b.set(doc, sess)
+    b.commit()
 
 
 def add_intervals(uid, start_dt, end_dt, source, dest):
     for day in pif.csvu.gendays(start_dt, end_dt):        
         add_day_intervals(uid, day, source, dest)
-                
+    print ("finished adding intervals for user", uid)
 
-def add_day_intervals(uid, day, source, dest):    
-    day_rr = pif.get_day_intervals(uid, day, source)    
+def add_day_intervals(uid, day, source, dest):
+    day_rr = pif.get_day_intervals(uid, day, source)
     if len(day_rr) > 0:
         dayname = datetime.strftime(day, "%Y%m%d")
-        print('adding', len(day_rr), 'RR intervals in', dayname)
+        print(len(day_rr), 'RR intervals in', dayname)
         rr_ref = u_ref(dest, uid).collection('rr')
         rr_ref.document(dayname).set({'rr_count': len(day_rr)})
         mref = rr_ref.document(dayname).collection('minutes')
-        for minutes in batch(group_by_minute(day_rr)):
-            print ('adding batch with', len(minutes), 'minutes')
+        for min_batch in batch(group_by_minute(day_rr)):
+            print ('adding batch with', len(min_batch), 'minutes')
             gr = dest.batch()
-            for (k, v) in minutes:
+            for (k, v) in min_batch:
                 doc = mref.document(k) 
                 gr.set(doc, v)
             gr.commit()
@@ -91,8 +94,10 @@ print ("Connected to Firestore...")
 ## for each user id in the database, search for sessions and intervals in csvs
 
 users = client.collection('users')
+userlist = [int(doc.id) for doc in users.get()]
 
-for doc in users.get():
-    uid = int(doc.id)
+for uid in userlist:
+    print("\n\nUSER", uid, "\n\n")
     add_sessions(uid, start_dt, end_dt, source, client)
     add_intervals(uid, start_dt, end_dt, source, client)
+    

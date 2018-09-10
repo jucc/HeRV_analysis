@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn import svm
-from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
+from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, accuracy_score
 
 import plotly.offline as pl
 import plotly.graph_objs as go
@@ -122,3 +122,14 @@ def plot_matrices(df, clf, features, label):
     ytrue, ypred = fit_test(clf, df, features, label)
     pl.iplot(prfs_heatmap(ytrue, ypred))
     pl.iplot(cmatrix_heatmap(ytrue, ypred))
+
+
+def barplot_accuracy_per_user(df, clf, features, label, users):
+    data = []
+    for user in users:
+        ytrue, ypred = fit_test(clf, df[df.user==user], features, label)
+        data.append(accuracy_score(ytrue, ypred))        
+    
+    fig = [go.Bar(y=data)]
+    pl.iplot(fig)
+

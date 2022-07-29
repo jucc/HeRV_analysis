@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "HeRV"
+version = "0.1.0"
+description = "HeRV data cleaning pipeline and notebooks with analysis"
+authors = ["Juliana Cavalcanti <jucorrea.mail@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9.9"
+pandas = "^0.23.0"
+hrv = "^0.1.5"
+numpy = "^1.15.0"
+matplotlib = "^3.0.0"
+jupyter = "^1.0.0"
+scikit-learn = "^0.19"
+firebase = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.0"
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"
